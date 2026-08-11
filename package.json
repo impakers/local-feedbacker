@@ -1,5 +1,5 @@
 {
-  "name": "@impakers/local-feedbacker",
+  "name": "local-feedbacker",
   "version": "0.1.0",
   "description": "Local-first UI feedback prompts for coding agents",
   "license": "MIT",

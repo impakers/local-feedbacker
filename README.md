@@ -1,4 +1,4 @@
-# @impakers/local-feedbacker
+# local-feedbacker
 
 Local-first UI feedback for designers and PMs working with coding agents. Select an element, describe the desired change, review a structured prompt, then copy it into Codex, Claude Code, or another agent.
 
@@ -6,7 +6,7 @@ It has no account, backend, telemetry, Impakers OS dependency, or automatic loca
 
 ```tsx
 "use client";
-import { ImpakersFeedbackProvider } from "@impakers/local-feedbacker/react";
+import { ImpakersFeedbackProvider } from "local-feedbacker/react";
 
 export function Feedback() {
   return <ImpakersFeedbackProvider language="en" />;
