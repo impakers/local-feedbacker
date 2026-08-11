@@ -1,0 +1,410 @@
+// =============================================================================
+// @impakers/debug — FAB Expandable Menu
+// =============================================================================
+//
+// 다크 글래스 계열. AuthFab(ui/AuthFab.tsx)도 이 모듈의 .fab / .contextMenu /
+// .contextMenuItem 을 그대로 재사용하므로, 두 FAB의 외형은 구조적으로 어긋날 수 없다.
+
+@use "../../styles/tokens" as t;
+@use "../../styles/glass" as g;
+
+@keyframes fabEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes menuItemIn {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes menuItemOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+}
+
+// =============================================================================
+// Main FAB button
+// =============================================================================
+
+.fab {
+  touch-action: none;
+  z-index: t.$z-fab;
+  width: t.$fab-size;
+  height: t.$fab-size;
+  border-radius: t.$r-pill;
+  color: t.$glass-dark-fg;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform t.$dur-fast ease, box-shadow t.$dur-fast ease,
+    background t.$dur-fast ease;
+  animation: fabEnter t.$dur-slow t.$ease-out;
+  position: relative;
+
+  // 피드백 팝오버와 같은 유리면을 쓴다.
+  //
+  // 예전에는 glass-shell(불투명 코어 + 바깥 반투명 띠)이었는데, 밝은 호스트
+  // 배경에서 그 3px 띠가 회색 링으로 도드라져 버튼에 테를 두른 것처럼 보였다.
+  // 면 전체를 한 겹 유리로 바꾸면 링이 사라지고 팝오버와 재질이 맞는다.
+  @include g.glass-dark(
+    $bg: t.$glass-dark-bg-strong,
+    $blur: t.$blur-lg,
+    $shadow: t.$shadow-3,
+    $fallback: t.$glass-dark-fallback-strong
+  );
+  @include g.protect-stroke-icons;
+
+  // 대각 광택 — 팝오버와 같은 각도/세기.
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(
+      158deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.02) 22%,
+      transparent 40%
+    );
+  }
+
+  // ::after(광택)가 자식 콘텐츠 위에 그려지므로 아이콘을 명시적으로 올린다.
+  // AuthFab도 이 클래스를 쓰는데 그쪽 svg에는 클래스가 없어서,
+  // 자손 선택자로 잡아야 두 FAB 모두 커버된다.
+  // 아이콘 크기도 여기서 정한다 — 컴포넌트의 width/height 속성보다 CSS가 이긴다.
+  svg {
+    width: t.$fab-icon;
+    height: t.$fab-icon;
+    position: relative;
+    z-index: 1;
+  }
+
+  // 데스크톱에서는 버튼과 아이콘을 함께 키운다. 비율(아이콘/버튼)은 유지해야
+  // 여백감이 같다 — 20/44 ≈ 28/48.
+  // 좌표 계산 쪽은 utils/fab-size.ts가 같은 브레이크포인트를 본다.
+  @media (min-width: t.$fab-desktop-min) {
+    width: t.$fab-size-lg;
+    height: t.$fab-size-lg;
+
+    svg {
+      width: t.$fab-icon-lg;
+      height: t.$fab-icon-lg;
+    }
+  }
+
+  &:hover {
+    transform: scale(1.08);
+    box-shadow: inset 0 0 0 1px t.$glass-dark-hairline-strong,
+      0 0 0 1px t.$glass-outer-ring, t.$shadow-3;
+
+    // 가라앉아 있던 오빗에 불이 들어온다 — 원반이 원래 밝기로 돌아오고, 멀리서
+    // 흔들리던 겹이 제자리에 멎는다. 아이콘 클래스명은 해시되므로 data 속성으로
+    // 잡고, 모션 정의와 "쉬는 상태"는 아이콘 모듈(icon-transitions.module.scss)에
+    // 있다 — 여기서는 그걸 되돌리기만 한다.
+    //
+    // 별빛의 흐름 자체는 항상 돌고 있고 hover에서 빨라지는데, 그 **속도**만은
+    // CSS로 못 바꾼다 — duration을 갈면 진행률이 다시 계산돼 혜성이 순간이동해서,
+    // JS가 playbackRate를 올린다(index.tsx).
+    //
+    // 마우스가 있는 환경에서만 건다. 터치 기기는 탭한 뒤 hover가 들러붙어 한쪽
+    // 상태로 굳는데, 애초에 아이콘 모듈에서 가라앉히지도 않으니 되돌릴 것도 없다.
+    @media (hover: hover) {
+      [data-orbit-disc] {
+        opacity: var(--orbit-lit);
+        // idle 펄스는 animation cascade가 일반 opacity 규칙보다 우선한다.
+        // hover 시에는 애니메이션을 완전히 꺼야 원래 밝기로 즉시 돌아온다.
+        animation: none;
+      }
+
+      [data-orbit-layer] {
+        animation-play-state: paused;
+      }
+    }
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+// =============================================================================
+// Menu items
+// =============================================================================
+
+.menuItems {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: t.$z-fab;
+}
+
+.menuItem {
+  width: 40px;
+  height: 40px;
+  border-radius: t.$r-pill;
+  color: t.$surface-light-fg;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform t.$dur-fast ease, box-shadow t.$dur-fast ease,
+    background t.$dur-fast ease, color t.$dur-fast ease;
+  position: relative;
+
+  // FAB과 같은 한 겹 유리면. 예전엔 glass-shell(불투명 코어 + 바깥 3px 반투명
+  // 띠)이었는데, 그 띠가 회색 링으로 도드라져 칩에 테를 두른 것처럼 보였다.
+  @include g.glass-light(
+    $bg: t.$glass-light-bg-strong,
+    $blur: t.$blur-md,
+    $shadow: t.$shadow-1,
+    $fallback: t.$glass-light-fallback
+  );
+  @include g.protect-stroke-icons;
+
+  // 대각 광택 — FAB과 같은 각도/세기.
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(
+      158deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.02) 22%,
+      transparent 40%
+    );
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+    position: relative;
+    z-index: 1;
+  }
+
+  &:hover {
+    transform: scale(1.08);
+    color: t.$brand-ink;
+    background: rgba(255, 255, 255, 0.92);
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
+
+  // 활성 상태(피드백 모드 진입 등)는 밝기를 뒤집어 확실히 구분한다.
+  // 기본이 흰 칩이므로 활성은 검정 — FAB과 같은 유리면을 그대로 써서
+  // "FAB과 한 몸으로 잠긴" 느낌을 준다.
+  &.active {
+    color: #fff;
+
+    @include g.glass-dark(
+      $bg: t.$glass-dark-bg-strong,
+      $blur: t.$blur-lg,
+      $shadow: t.$shadow-2,
+      $fallback: t.$glass-dark-fallback-strong
+    );
+
+    &:hover {
+      background: t.$glass-dark-bg-strong;
+    }
+  }
+}
+
+// Staggered animation for menu items
+.menuItem:nth-child(1) {
+  animation: menuItemIn 0.15s t.$ease-out 0ms both;
+}
+.menuItem:nth-child(2) {
+  animation: menuItemIn 0.15s t.$ease-out 40ms both;
+}
+.menuItem:nth-child(3) {
+  animation: menuItemIn 0.15s t.$ease-out 80ms both;
+}
+.menuItem:nth-child(4) {
+  animation: menuItemIn 0.15s t.$ease-out 120ms both;
+}
+
+.menuItemClosing:nth-child(1) {
+  animation: menuItemOut 0.1s ease-in 40ms both;
+}
+.menuItemClosing:nth-child(2) {
+  animation: menuItemOut 0.1s ease-in 0ms both;
+}
+
+// =============================================================================
+// Tooltip
+// =============================================================================
+
+.tooltip {
+  position: absolute;
+  right: calc(100% + 10px);
+  // 칩의 ::after(광택)보다 위. 없으면 툴팁 위로 광택 그라데이션이 덮인다.
+  z-index: 3;
+  white-space: nowrap;
+  color: t.$glass-dark-fg;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: t.$r-sm;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity t.$dur-fast ease;
+  font-family: t.$font-sans;
+
+  @include g.glass-dark(
+    $bg: t.$glass-dark-bg-strong,
+    $blur: t.$blur-sm,
+    $shadow: t.$shadow-1,
+    $fallback: t.$glass-dark-fallback-strong
+  );
+}
+
+.menuItem:hover .tooltip {
+  opacity: 1;
+}
+
+// =============================================================================
+// Context Menu
+// =============================================================================
+
+.contextMenu {
+  border-radius: t.$r-md;
+  padding: 4px;
+  min-width: 140px;
+  font-family: t.$font-sans;
+  animation: menuItemIn 0.1s ease-out;
+
+  @include g.glass-dark(
+    $bg: t.$glass-dark-bg-strong,
+    $blur: t.$blur-md,
+    $shadow: t.$shadow-3,
+    $fallback: t.$glass-dark-fallback-strong
+  );
+}
+
+.contextMenuItem {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  font-size: 13px;
+  color: t.$glass-dark-fg;
+  text-align: left;
+  cursor: pointer;
+  border-radius: t.$r-sm;
+  font-family: inherit;
+  transition: background t.$dur-fast ease;
+
+  &:hover {
+    background: t.$glass-dark-hover;
+  }
+
+  &:active {
+    background: t.$glass-dark-active;
+  }
+}
+
+// =============================================================================
+// Badge (unread count)
+// =============================================================================
+
+.badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  border-radius: t.$r-pill;
+  background: t.$status-danger;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  font-family: t.$font-sans;
+  z-index: 2;
+}
+
+// =============================================================================
+// Unread dot / numeric badge on FAB
+// =============================================================================
+//
+// 배지를 FAB 면에서 떼어 보이게 하는 링. FAB이 불투명 검정이므로 같은 색을 쓴다.
+
+$fab-badge-ring: t.$surface-dark;
+
+.unreadDot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: t.$r-pill;
+  background: t.$status-danger;
+  border: 2px solid $fab-badge-ring;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.fabBadge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: t.$r-pill;
+  background: t.$status-danger;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid $fab-badge-ring;
+  box-sizing: content-box;
+  pointer-events: none;
+  font-family: t.$font-sans;
+  z-index: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fab,
+  .menuItem,
+  .menuItemClosing,
+  .contextMenu {
+    animation: none !important;
+  }
+
+  // 오빗은 손댈 게 없다 — 아이콘 모듈이 이 설정에서 별빛을 그리지 않고 원반도
+  // 가라앉히지 않으므로, hover가 되돌릴 상태 자체가 없다.
+}

@@ -1,0 +1,518 @@
+// Annotation Popup - CSS-only version (no framer-motion)
+// Uses CSS animations for all transitions
+
+@use "../../styles/tokens" as t;
+@use "../../styles/glass" as g;
+
+// Protect stroke-based icons from host page `svg { fill: currentColor }` rules.
+// Scoped to this widget's own containers to avoid breaking host SVGs that use
+// fill="none" with CSS-based fills (e.g. Tailwind's fill-current).
+.popup {
+  @include g.protect-stroke-icons;
+}
+
+// =============================================================================
+// Animation Keyframes
+// =============================================================================
+
+@keyframes popupEnter {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.95) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) scale(1) translateY(0);
+  }
+}
+
+@keyframes popupExit {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.95) translateY(4px);
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(-50%) scale(1) translateY(0) translateX(0);
+  }
+  20% {
+    transform: translateX(-50%) scale(1) translateY(0) translateX(-3px);
+  }
+  40% {
+    transform: translateX(-50%) scale(1) translateY(0) translateX(3px);
+  }
+  60% {
+    transform: translateX(-50%) scale(1) translateY(0) translateX(-2px);
+  }
+  80% {
+    transform: translateX(-50%) scale(1) translateY(0) translateX(2px);
+  }
+}
+
+// =============================================================================
+// Popup Container
+// =============================================================================
+
+.popup {
+  position: fixed;
+  transform: translateX(-50%);
+  width: 280px;
+  padding: 0.75rem 1rem 14px;
+  border-radius: t.$r-lg;
+  z-index: t.$z-popup;
+  font-family: t.$font-sans;
+  will-change: transform, opacity;
+
+  // 본문 텍스트가 들어가는 서피스라 가장 불투명한 다크 글래스를 쓴다.
+  // 뒤 호스트 UI가 비치되 글자 가독성은 유지되는 지점.
+  @include g.glass-dark(
+    $bg: t.$glass-dark-bg-strong,
+    $blur: t.$blur-lg,
+    $shadow: t.$shadow-3,
+    $fallback: t.$glass-dark-fallback-strong
+  );
+
+  // 대각 광택 한 줄. glass-shell만큼 진하면 글자 위에 얹혀 가독성이 떨어지므로
+  // sheen 세기를 낮추고 카드 위쪽 1/3에만 걸리게 짧게 끊는다.
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(
+      158deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.02) 22%,
+      transparent 40%
+    );
+  }
+
+  // Initial state (before animation)
+  opacity: 0;
+
+  &.enter {
+    animation: popupEnter 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  // After enter animation completes, set stable state
+  &.entered {
+    opacity: 1;
+    transform: translateX(-50%) scale(1) translateY(0);
+  }
+
+  &.exit {
+    animation: popupExit 0.15s ease-in forwards;
+  }
+
+  // Shake needs entered state to be stable first
+  &.entered.shake {
+    animation: shake 0.25s ease-out;
+  }
+}
+
+// =============================================================================
+// Header
+// =============================================================================
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5625rem;
+}
+
+.element {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.5);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.headerToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+
+  .element {
+    flex: 1;
+  }
+}
+
+// Chevron icon that rotates when computed styles are expanded
+.chevron {
+  color: rgba(255, 255, 255, 0.5);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); // Matches FAQ accordion easing
+  flex-shrink: 0;
+
+  &.expanded {
+    transform: rotate(90deg);
+  }
+}
+
+// =============================================================================
+// Computed Styles Block
+// =============================================================================
+
+// Accordion animation using grid-template-rows technique for smooth height transitions
+// See: https://css-tricks.com/css-grid-can-do-auto-height-transitions/
+.stylesWrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s cubic-bezier(0.16, 1, 0.3, 1); // Matches FAQ accordion easing
+
+  &.expanded {
+    grid-template-rows: 1fr;
+  }
+}
+
+// Inner container with overflow:hidden is required for the grid animation to work
+.stylesInner {
+  overflow: hidden;
+}
+
+// Code-block styling for computed CSS properties display
+.stylesBlock {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.625rem;
+  margin-bottom: 0.5rem;
+  font-family:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.6875rem;
+  line-height: 1.5;
+}
+
+.styleLine {
+  color: rgba(255, 255, 255, 0.85);
+  word-break: break-word;
+}
+
+// Syntax highlighting colors (purple for properties, light for values)
+.styleProperty {
+  color: #c792ea;
+}
+
+.styleValue {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.timestamp {
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.35);
+  font-variant-numeric: tabular-nums;
+  margin-left: 0.5rem;
+  flex-shrink: 0;
+}
+
+// =============================================================================
+// Quote
+// =============================================================================
+
+.quote {
+  font-size: 12px;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 0.5rem;
+  padding: 0.4rem 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0.25rem;
+  line-height: 1.45;
+}
+
+// =============================================================================
+// Textarea
+// =============================================================================
+
+.textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.5rem 0.625rem;
+  font-size: 0.8125rem;
+  font-family: inherit;
+  line-height: 1.55;
+  // 팝업 자체가 이미 다크 글래스라 텍스트 영역에 또 상자를 두르지 않는다.
+  // 카드 하나 위에 텍스트가 얹힌 단일 유리면으로 보이게, border/background 제거.
+  background: transparent;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  resize: none;
+  outline: none;
+  min-height: 80px;
+  max-height: 200px;
+  position: relative;
+  z-index: 1;
+  transition: box-shadow 0.15s ease, height 0.1s ease;
+
+  // 테두리 대신 은은한 포커스 글로우 — 상자를 그리지 않고도 초점을 알린다.
+  &:focus {
+    box-shadow: 0 0 0 2px
+      color-mix(in srgb, var(--impakers-accent, #3c82f7) 45%, transparent);
+    border-radius: 6px;
+  }
+
+  &.green:focus {
+    box-shadow: 0 0 0 2px color-mix(in srgb, t.$status-success 45%, transparent);
+  }
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.35);
+  }
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+  }
+}
+
+// =============================================================================
+// Actions
+// =============================================================================
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+}
+
+.localFooter {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 28px;
+  margin-top: 0.25rem;
+
+  button {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    color: rgba(255, 255, 255, 0.82);
+    cursor: pointer;
+    font-size: 0.7rem;
+    padding: 0.32rem 0.58rem;
+  }
+
+  audio { width: 150px; height: 28px; }
+}
+
+// 레퍼런스의 "Thinking" / "Search" 칩처럼, 쉬는 상태에서도 카드 위에 얹힌
+// 유리 조각으로 보이게 한다 — hover에서만 나타나는 배경이 아니라 항상 옅은
+// 테두리+배경을 깔아둔다.
+.cancel,
+.submit {
+  padding: 0.4rem 0.875rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 1rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.cancel {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.85);
+  }
+}
+
+.submit {
+  color: white;
+  // 코어는 accentColor(인라인)로 채워지므로, 유리 테두리는 위쪽 hairline만
+  // 살짝 얹어 "칩 표면" 느낌을 더한다 — 색조 자체는 건드리지 않는다.
+  // $shadow에 none을 넣으면 box-shadow 콤마 리스트 안에 `none`이 섞여
+  // 선언 전체가 무효화된다 — 0 크기의 유효한 shadow로 대신 채운다.
+  @include g.glass-border(
+    $hairline: rgba(255, 255, 255, 0.32),
+    $shadow: 0 0 0 transparent
+  );
+
+  &:hover:not(:disabled) {
+    filter: brightness(0.9);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+.shortcutHint {
+  text-align: right;
+  font-size: 11px;
+  color: #9ca3af;
+  padding: 2px 4px 0;
+  user-select: none;
+}
+
+// Delete button wrapper
+.deleteWrapper {
+  margin-right: auto;
+}
+
+.deleteButton {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.4);
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.1s ease;
+
+  &:hover {
+    background-color: color-mix(
+      in srgb,
+      t.$status-danger 25%,
+      transparent
+    );
+    color: t.$status-danger;
+  }
+
+  &:active {
+    transform: scale(0.92);
+  }
+}
+
+// =============================================================================
+// Light Mode
+// =============================================================================
+
+.light {
+  &.popup {
+    background: #fff;
+    box-shadow:
+      0 4px 24px rgba(0, 0, 0, 0.12),
+      0 0 0 1px rgba(0, 0, 0, 0.06);
+  }
+
+  .element {
+    color: rgba(0, 0, 0, 0.6);
+  }
+
+  .timestamp {
+    color: rgba(0, 0, 0, 0.4);
+  }
+
+  .chevron {
+    color: rgba(0, 0, 0, 0.4);
+  }
+
+  .stylesBlock {
+    background: rgba(0, 0, 0, 0.03);
+  }
+
+  .styleLine {
+    color: rgba(0, 0, 0, 0.75);
+  }
+
+  .styleProperty {
+    color: #7c3aed;
+  }
+
+  .styleValue {
+    color: rgba(0, 0, 0, 0.75);
+  }
+
+  .quote {
+    color: rgba(0, 0, 0, 0.55);
+    background: rgba(0, 0, 0, 0.04);
+  }
+
+  .textarea {
+    // 다크 모드와 같은 이유로 상자를 두르지 않는다 — 흰 카드 위에 텍스트만.
+    color: #1a1a1a;
+
+    &:focus {
+      box-shadow: 0 0 0 2px
+        color-mix(in srgb, var(--impakers-accent, #3c82f7) 35%, transparent);
+    }
+
+    &::placeholder {
+      color: rgba(0, 0, 0, 0.4);
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.15);
+    }
+  }
+
+  .cancel {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: rgba(0, 0, 0, 0.5);
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.08);
+      color: rgba(0, 0, 0, 0.75);
+    }
+  }
+
+  .submit {
+    @include g.glass-border(
+      $hairline: rgba(255, 255, 255, 0.5),
+      $shadow: 0 0 0 transparent
+    );
+  }
+
+  .deleteButton {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: rgba(0, 0, 0, 0.4);
+
+    &:hover {
+      background-color: color-mix(
+        in srgb,
+        t.$status-danger 25%,
+        transparent
+      );
+      border-color: transparent;
+      color: t.$status-danger;
+    }
+  }
+}

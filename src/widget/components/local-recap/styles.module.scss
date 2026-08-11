@@ -1,0 +1,174 @@
+// =============================================================================
+// @impakers/debug — Local Recap Styles
+// =============================================================================
+//
+// 로컬 모드에서 마커를 다시 눌렀을 때 뜨는 되짚기 패널.
+// 코멘트 스레드(호스티드)의 자리를 대신하지만 스레드가 아니다 — 읽고 다시
+// 복사하는 것뿐이라 컨트롤/오버레이 계열의 **다크 글래스**를 쓴다.
+// (`glass-light-pane` 은 읽기 패널 옵트인 전용이므로 여기서는 쓰지 않는다.)
+// =============================================================================
+
+@use "../../styles/tokens" as t;
+@use "../../styles/glass" as g;
+
+@keyframes recapIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.recap {
+  @include g.protect-stroke-icons;
+
+  position: fixed;
+  width: 320px;
+  max-height: min(360px, calc(100vh - 40px));
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px 12px;
+  border-radius: t.$r-lg;
+  z-index: t.$z-popup;
+  font-family: t.$font-sans;
+  color: t.$glass-dark-fg;
+  animation: recapIn t.$dur-base t.$ease-out;
+
+  // 팝오버와 같은 재질 — 본문 글자가 올라가는 면이라 가장 불투명한 다크 글래스.
+  @include g.glass-dark(
+    $bg: t.$glass-dark-bg-strong,
+    $blur: t.$blur-lg,
+    $shadow: t.$shadow-3,
+    $fallback: t.$glass-dark-fallback-strong
+  );
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: t.$glass-dark-fg-muted;
+}
+
+.close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: t.$glass-dark-fg-faint;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background-color t.$dur-fast ease,
+    color t.$dur-fast ease;
+
+  &:hover {
+    background: t.$glass-dark-hover;
+    color: t.$glass-dark-fg;
+  }
+}
+
+// 제출 시 캡처된 화면. 어느 화면이었는지 알아볼 정도면 충분하므로 높이를 묶어 둔다
+// — 패널 본문은 프롬프트 원문의 자리다.
+.screenshot {
+  max-width: 100%;
+  max-height: 160px;
+  object-fit: contain;
+  border-radius: t.$r-sm;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+// 프롬프트 원문. 편집하는 곳이 아니라 다시 확인하는 곳이라 읽기 전용이다.
+.text {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: t.$r-sm;
+  background: rgba(255, 255, 255, 0.05);
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: pre-wrap;
+  word-break: break-word;
+  -webkit-font-smoothing: antialiased;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 8px;
+  flex-shrink: 0;
+}
+
+// 목록 패널의 행 삭제(.removeBtn)와 같은 성격이라 같은 크기·같은 위험색을 쓴다.
+.delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: t.$r-sm;
+  background: transparent;
+  color: t.$glass-dark-fg-faint;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background-color t.$dur-fast ease,
+    color t.$dur-fast ease;
+
+  &:hover {
+    background: rgba(220, 38, 38, 0.16);
+    color: #f87171;
+  }
+}
+
+.copy {
+  padding: 6px 12px;
+  border-radius: t.$r-pill;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.82);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color t.$dur-fast ease,
+    color t.$dur-fast ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: t.$glass-dark-fg;
+  }
+}
+
+.copied {
+  color: t.$status-success;
+  border-color: rgba(22, 163, 74, 0.4);
+}

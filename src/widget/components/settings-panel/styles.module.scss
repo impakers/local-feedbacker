@@ -1,0 +1,337 @@
+@use "../../styles/glass" as g;
+
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100005;
+}
+
+.panel {
+  position: fixed;
+  bottom: 80px;
+  right: 24px;
+  width: 280px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+  z-index: 100006;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  animation: panelIn 0.15s ease-out;
+  -webkit-font-smoothing: antialiased;
+
+  // theme="light-glass" 옵트인. 이 클래스가 없으면 위 규칙 그대로 — 기존 배포 무영향.
+  // 이 패널은 header/body 에 자체 배경이 없어 판 전체가 그대로 유리로 읽힌다.
+  &.glass {
+    @include g.glass-light-pane;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #18181b;
+}
+
+.closeBtn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  color: #6b7280;
+  &:hover { background: #f3f4f6; color: #18181b; }
+}
+
+.body {
+  padding: 12px 16px 16px;
+}
+
+// User info (no box wrapper)
+.userInfo {
+  min-width: 0;
+  padding-bottom: 12px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.userName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #18181b;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.userEmail {
+  font-size: 11px;
+  color: #6b7280;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.userService {
+  font-size: 10px;
+  color: #9ca3af;
+  line-height: 1.3;
+  margin-top: 1px;
+}
+
+.logoutBtn {
+  width: 100%;
+  margin-top: 12px;
+  padding: 9px 12px;
+  border: 1px solid #f3f4f6;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+  &:hover { background: #fee2e2; border-color: #fecaca; color: #dc2626; }
+}
+
+.field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+}
+
+.fieldLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+}
+
+// 언어 선택 (로컬 모드 전용)
+//
+// 배경을 불투명 #fff 가 아니라 반투명 흰색으로 둔다. solid 패널(#fff) 위에서는
+// 흰색 그대로이고, `.glass` 판유리 위에서는 판이 비쳐 떠 보이지 않는다.
+// 글자색은 .fieldLabel 과 같은 값이라 두 서피스 모두에서 그대로 읽힌다.
+.select {
+  max-width: 60%;
+  padding: 5px 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.72);
+  font-family: inherit;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+
+  &:hover { border-color: #d1d5db; }
+  &:focus-visible { outline: 2px solid #18181b; outline-offset: 1px; }
+}
+
+// 전체 삭제 버튼 (로컬 모드 전용) — .logoutBtn 과 같은 독립 버튼 규칙을 따른다.
+// 라벨/컨트롤 짝(.field)이 아니라 한 줄을 통으로 쓰는 아이콘+문구 버튼이다.
+.clearAllBtn {
+  width: 100%;
+  margin-top: 12px;
+  padding: 9px 12px;
+  border: 1px solid #f3f4f6;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+
+  &:hover:not(:disabled) { background: #fee2e2; border-color: #fecaca; color: #dc2626; }
+  &:focus-visible { outline: 2px solid #18181b; outline-offset: 1px; }
+  &:disabled { opacity: 0.5; cursor: default; }
+}
+
+// Toggle switch
+.toggle {
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+  background: #d1d5db;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.2s;
+  padding: 0;
+
+  &.on {
+    background: #18181b;
+  }
+}
+
+.toggleThumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+
+  .on & {
+    transform: translateX(18px);
+  }
+}
+
+// Color picker
+.colors {
+  display: flex;
+  gap: 6px;
+}
+
+.colorBtn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.12s, border-color 0.12s;
+  padding: 0;
+
+  &:hover {
+    transform: scale(1.15);
+  }
+
+  &.selected {
+    border-color: #18181b;
+    transform: scale(1.15);
+  }
+}
+
+// Shortcuts (collapsible)
+.shortcuts {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.shortcutsToggle {
+  width: 100%;
+  padding: 6px 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  font-family: inherit;
+
+  &:hover { color: #18181b; }
+}
+
+.chevron {
+  color: #9ca3af;
+  transition: transform 0.15s ease-out;
+  flex-shrink: 0;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.shortcutList {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+}
+
+// 라벨 위 / 키 아래 — "Ctrl ⌃ + Shift ⇧ + ,(쉼표)" 는 280px 패널에서
+// 라벨과 한 줄에 두면 넘친다.
+.shortcutRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 0;
+}
+
+.shortcutLabel {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.3;
+  min-width: 0;
+}
+
+.shortcutKeys {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.keyGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.keySep {
+  font-size: 10px;
+  color: #9ca3af;
+}
+
+.key {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 5px;
+  border: 1px solid #e5e7eb;
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: #f9fafb;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  line-height: 1.4;
+  color: #374151;
+  white-space: nowrap;
+}
+
+.keyIcon {
+  font-size: 10px;
+  color: #9ca3af;
+}
+
+// Version
+.version {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f3f4f6;
+  font-size: 11px;
+  color: #9ca3af;
+  text-align: center;
+}

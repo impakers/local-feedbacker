@@ -1,0 +1,206 @@
+// =============================================================================
+// @impakers/debug — Glass Surface Mixins
+// =============================================================================
+//
+// 이 파일도 CSS를 출력하지 않는다 (믹스인 정의만).
+// 사용: `@use "../../styles/glass" as g;` → `@include g.glass-dark;`
+//
+// !!! 주의 !!!
+// backdrop-filter는 자손 `position: fixed` 요소의 containing block을 만든다.
+// 반드시 **말단 서피스에만** 적용할 것. portalRoot 같은 래퍼에 걸면 그 안의
+// fixed 요소(FAB, 마커, 패널)가 전부 어긋난다.
+// =============================================================================
+
+@use "tokens" as t;
+
+/// 겉면만 유리 — 반투명 유리 테두리 + 불투명 코어 + 상단 광택.
+///
+/// 44px 원처럼 작은 컨트롤은 면 전체를 반투명하게 만들어도 블러가 드러날 면적이
+/// 없고, 밝은 호스트 앱에서는 채움이 회색으로 떠서 비활성처럼 읽힌다.
+/// 그래서 코어는 불투명하게 잠그고 바깥 $inset 만큼의 띠만 유리로 둔다.
+/// 이 띠가 뒤 배경의 색을 물어오기 때문에 사진·그라데이션 위에서 실제로 유리처럼
+/// 빛나고, 평평한 배경에서는 은은한 베젤로 남는다.
+///
+/// 주의: overflow를 자르지 않는다 — 배지와 툴팁이 버튼 바깥에 놓인다.
+/// 자식 콘텐츠는 ::after(광택)보다 위로 올려야 하므로 z-index가 필요하다.
+@mixin glass-shell(
+  $core,
+  $shell,
+  $sheen: rgba(255, 255, 255, 0.24),
+  $hairline: t.$glass-dark-hairline,
+  $ring: t.$glass-outer-ring,
+  $blur: 10px,
+  $inset: 3px,
+  $shadow: t.$shadow-2
+) {
+  position: relative;
+  background: $shell;
+  backdrop-filter: blur($blur) saturate(t.$saturate);
+  -webkit-backdrop-filter: blur($blur) saturate(t.$saturate);
+  box-shadow: inset 0 0 0 1px $hairline, 0 0 0 1px $ring, $shadow;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: $inset;
+    border-radius: inherit;
+    background: $core;
+    pointer-events: none;
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(
+      158deg,
+      $sheen 0%,
+      rgba(255, 255, 255, 0.06) 34%,
+      transparent 58%
+    );
+  }
+
+  // 블러가 없으면 유리 띠는 그냥 흐린 테두리로 남는다. 코어 색으로 덮어 평평하게.
+  @supports not (
+    (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+  ) {
+    background: $core;
+  }
+}
+
+/// 글래스 경계 3겹(안쪽 hairline + 바깥 ring + elevation)을 한 줄로 만든다.
+/// hover/active처럼 box-shadow를 통째로 덮어쓰는 자리에서 이걸 써야
+/// 바깥 ring이 실수로 사라지지 않는다.
+@mixin glass-border($hairline: t.$glass-dark-hairline, $shadow: t.$shadow-2) {
+  box-shadow: inset 0 0 0 1px $hairline, 0 0 0 1px t.$glass-outer-ring, $shadow;
+}
+
+/// 다크 글래스 서피스.
+/// $fallback은 backdrop-filter 미지원 시 쓸 불투명 배경.
+///
+/// 경계는 **안쪽 밝은 hairline + 바깥 어두운 ring** 2겹으로 만든다.
+/// 호스트 앱의 배경 밝기를 CSS로 알아낼 수 없기 때문에, 둘 다 항상 깔아두고
+/// 각자 반대쪽 배경에서 일을 하게 한다:
+///   - 밝은 호스트 → 바깥 어두운 ring이 가장자리를 잡아준다
+///   - 어두운 호스트 → 안쪽 밝은 hairline이 잡아준다
+/// 실측으로 다크 배경에서 표면↔배경 대비가 1.07:1 까지 떨어져(= 거의 안 보임)
+/// 이 2겹 경계 없이는 어두운 앱에서 위젯이 사라진다.
+@mixin glass-dark(
+  $bg: t.$glass-dark-bg,
+  $blur: t.$blur-md,
+  $shadow: t.$shadow-2,
+  $hairline: t.$glass-dark-hairline,
+  $fallback: t.$glass-dark-fallback
+) {
+  background: $bg;
+  backdrop-filter: blur($blur) saturate(t.$saturate);
+  -webkit-backdrop-filter: blur($blur) saturate(t.$saturate); // Safari
+  box-shadow: inset 0 0 0 1px $hairline, 0 0 0 1px t.$glass-outer-ring, $shadow;
+
+  // 클라이언트 앱의 브라우저 환경을 통제할 수 없으므로 폴백은 필수다.
+  // 반투명만 남고 blur가 없으면 뒤 콘텐츠가 그대로 비쳐 글자가 안 읽힌다.
+  @supports not (
+    (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+  ) {
+    background: $fallback;
+  }
+}
+
+/// 라이트 글래스 서피스 — 밝은 **컨트롤** 면 (FAB 메뉴 칩).
+///
+/// !!! 주의 !!!
+/// `fab-menu` 의 `.menuItem` 이 이 믹스인을 쓴다. 여기를 고치면 fab-menu 파일에는
+/// diff 한 줄 없이 FAB 메뉴 칩의 겉모습이 바뀐다. 읽기 패널용 유리가 필요하면
+/// 이걸 손대지 말고 아래 `glass-light-pane` 을 쓸 것.
+@mixin glass-light(
+  $bg: t.$glass-light-bg,
+  $blur: t.$blur-lg,
+  $shadow: t.$shadow-2,
+  $hairline: t.$glass-light-hairline,
+  $fallback: t.$glass-light-fallback
+) {
+  background: $bg;
+  backdrop-filter: blur($blur) saturate(t.$saturate);
+  -webkit-backdrop-filter: blur($blur) saturate(t.$saturate);
+  box-shadow: inset 0 0 0 1px $hairline, $shadow;
+
+  @supports not (
+    (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+  ) {
+    background: $fallback;
+  }
+}
+
+/// 판유리 — 읽기 패널 (인박스/스레드/설정. `theme="light-glass"` 옵트인 전용).
+///
+/// 저철분 판유리 한 장. 장식(굴절·컨익 림·스펙큘러 스윕)은 전부 걷어내고
+/// 냉백 틴트 + 블러 + 2겹 경계 + **상단 캐치라이트** 만 남긴다. 캐치라이트가
+/// 이 재질의 서명이다 — 이 한 줄이 있어야 "흰색으로 칠한 면"이 아니라
+/// "두께가 있는 판"으로 읽힌다.
+///
+/// !!! backdrop-filter 를 루트에 걸지 않는 이유 !!!
+/// backdrop-filter 는 자손 `position: fixed` 의 containing block 을 만든다.
+/// 세 패널 안에는 PhotoGroup 의 전체화면 라이트박스(fixed·inset 0·z 2147483647)가
+/// 들어 있어서, 루트에 걸면 라이트박스가 340px 스레드 상자 안으로 접혀 들어간다.
+/// 그래서 유리는 자손이 없는 `::before` 한 겹이 대신 짊어진다 — 이 파일 맨 위
+/// 경고의 "말단 서피스에만" 을 큰 패널에서 지키는 방법이다.
+///
+/// 대상 요소에는 자체 스태킹 컨텍스트가 필요하다 (세 패널 모두 position:fixed +
+/// z-index 를 이미 갖고 있다). `::before` 는 z-index:-1 로 깔리므로 루트 배경
+/// 위·본문 아래에 정확히 한 겹으로 들어간다.
+@mixin glass-light-pane(
+  $bg: t.$glass-pane-bg-strong,
+  $blur: t.$blur-lg,
+  $shadow: t.$shadow-pane,
+  $hairline: t.$glass-pane-hairline,
+  $highlight: t.$glass-pane-highlight,
+  $ring: t.$glass-pane-ring,
+  $sheen: t.$glass-pane-sheen,
+  $fallback: t.$glass-pane-fallback
+) {
+  // 판 자체는 비운다. 채움·블러는 전부 ::before 가 진다.
+  background: transparent;
+  // 바깥 먹선(밝은 호스트에서 가장자리를 잡아준다) + 판유리용 얕은 그림자.
+  box-shadow: 0 0 0 1px $ring, $shadow;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+    // 위가 밝고 아래로 아주 얕게 옅어진다. glass-shell 광택과 같은 158deg —
+    // 위젯 안에서 빛의 방향을 하나로 통일한다.
+    background: linear-gradient(158deg, $sheen 0%, transparent 62%), $bg;
+    backdrop-filter: blur($blur) saturate(t.$saturate-pane);
+    -webkit-backdrop-filter: blur($blur) saturate(t.$saturate-pane);
+    // 순서가 곧 위아래다. 상단 캐치라이트가 안쪽 흰 테보다 먼저 와야 위에 얹힌다.
+    box-shadow: inset 0 1px 0 $highlight, inset 0 0 0 1px $hairline;
+  }
+
+  // 반투명만 남고 blur 가 없으면 뒤 콘텐츠가 그대로 비쳐 글자가 안 읽힌다.
+  @supports not (
+    (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+  ) {
+    &::before {
+      background: $fallback;
+    }
+  }
+}
+
+/// 상단 가장자리 광택 1줄. 유리에 빛이 걸린 느낌을 낸다.
+/// 대상 요소에 `position: relative` 와 `overflow: hidden` 이 필요하다.
+/// 호스트 페이지의 `svg { fill: currentColor }` 류 전역 규칙으로부터
+/// stroke 기반 아이콘을 보호한다. 기존 컴포넌트들이 쓰던 패턴을 믹스인화한 것.
+@mixin protect-stroke-icons {
+  svg[fill="none"] {
+    fill: none !important;
+  }
+
+  svg[fill="none"] :not([fill]) {
+    fill: none !important;
+  }
+}

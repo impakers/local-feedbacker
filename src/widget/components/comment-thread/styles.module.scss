@@ -1,0 +1,674 @@
+// =============================================================================
+// @impakers/debug — Comment Thread Styles (Vercel Toolbar inspired)
+// =============================================================================
+
+@use "../../styles/glass" as g;
+
+@keyframes threadIn {
+  from { opacity: 0; transform: scale(0.96) translateY(4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes threadOut {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.96); }
+}
+
+.thread {
+  position: fixed;
+  width: 340px;
+  // JS에서 계산한 남은 공간 내에서 최대 480px
+  max-height: min(480px, var(--thread-max-height, calc(100vh - 40px)));
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+  z-index: 100002;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 13px;
+  color: #1a1a1a;
+  animation: threadIn 0.15s ease-out;
+  -webkit-font-smoothing: antialiased;
+
+  &.exiting {
+    animation: threadOut 0.12s ease-in forwards;
+    pointer-events: none;
+  }
+
+  // theme="light-glass" 옵트인. 이 클래스가 없으면 위 규칙 그대로 — 기존 배포 무영향.
+  // 코멘트 목록에 자체 배경이 없어 스레드 본문 대부분이 유리로 읽힌다
+  // (헤더 띠 #f5f5f5 와 첨부 카드는 기존 그대로).
+  &.glass {
+    @include g.glass-light-pane;
+  }
+}
+
+// =============================================================================
+// Header (first comment = title)
+// =============================================================================
+
+.header {
+  padding: 14px 16px 10px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex-shrink: 0;
+  background: #f5f5f5;
+}
+
+.avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #16a34a;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.headerInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.headerTop {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.authorName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.timestamp {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.headerAction {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  color: #9ca3af;
+  transition: background 0.12s, color 0.12s;
+  padding: 0;
+
+  &:hover {
+    background: #f3f4f6;
+    color: #374151;
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.title {
+  font-size: 13px;
+  color: #1a1a1a;
+  line-height: 1.5;
+  word-break: break-word;
+  white-space: pre-wrap;
+
+  // 긴 피드백은 기본 6줄 클램프 — 헤더가 스레드 최대 높이를 넘지 않게
+  &.titleClamped {
+    display: -webkit-box;
+    -webkit-line-clamp: 6;
+    line-clamp: 6;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  &.titleExpanded {
+    max-height: 180px;
+    overflow-y: auto;
+    // 스크롤바 스타일은 commentsList와 동일
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: #d1d5db;
+      border-radius: 2px;
+    }
+  }
+}
+
+.titleToggle {
+  margin-top: 4px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+
+  &:hover {
+    color: #374151;
+    text-decoration: underline;
+  }
+}
+
+// =============================================================================
+// Comments list
+// =============================================================================
+
+.commentsList {
+  flex: 1;
+  min-height: 0; // flex child가 overflow scroll 되게 하려면 필요
+  overflow-y: auto;
+  padding: 0;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 2px;
+  }
+}
+
+.comment {
+  padding: 10px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+
+  &:hover {
+    background: #f9fafb;
+  }
+
+  &:hover .commentActions {
+    opacity: 1;
+  }
+}
+
+.commentHighlight {
+  background: #eff6ff;
+  border-left: 2px solid #3b82f6;
+  padding-left: 14px;
+}
+
+// 서버 저장 전 임시 코멘트 (첨부 업로드 중 포함)
+.commentPending {
+  opacity: 0.6;
+}
+
+// 전송 진행 상태 — composer 안에 들어가므로 replyArea와 같은 14px 리듬을 맞춘다.
+.sendingStatus {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 14px 0;
+  font-size: 11px;
+  color: #3b82f6;
+  line-height: 1.4;
+}
+
+.sendingDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #3b82f6;
+  flex-shrink: 0;
+  animation: impakersThreadSendingPulse 1s ease-in-out infinite;
+}
+
+@keyframes impakersThreadSendingPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+.commentContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.commentTop {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.commentAuthor {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.commentTime {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.commentReadCount {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #9ca3af;
+  font-weight: 500;
+  cursor: help;
+  user-select: none;
+}
+
+.commentActions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.commentText {
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.5;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+// Screenshot thumbnail inside comment
+.screenshot {
+  margin-top: 8px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  position: relative;
+  max-width: 200px;
+
+  img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .screenshotBadge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+}
+
+// =============================================================================
+// System message (임패커스 자동 안내 — 완료 확인 등)
+// =============================================================================
+
+.systemMessage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 0;
+}
+
+.systemBubble {
+  max-width: 90%;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  color: #4b5563;
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
+  white-space: pre-wrap;
+}
+
+.systemTime {
+  font-size: 10px;
+  color: #9ca3af;
+}
+
+// =============================================================================
+// File card (non-image attachment)
+// =============================================================================
+
+.fileCard {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.12s;
+  max-width: 200px;
+
+  &:hover {
+    background: #f3f4f6;
+  }
+}
+
+.fileIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: #e5e7eb;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+
+.fileInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.fileCardName {
+  font-size: 12px;
+  font-weight: 500;
+  color: #1a1a1a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fileCardSize {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+// =============================================================================
+// Pending file preview
+// =============================================================================
+
+.pendingFile {
+  position: relative;
+  margin: 0 16px 8px;
+  padding: 8px 10px;
+  padding-right: 30px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+// =============================================================================
+// Divider
+// =============================================================================
+
+.divider {
+  height: 1px;
+  background: #f3f4f6;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+// =============================================================================
+// Pending image preview
+// =============================================================================
+
+.pendingImage {
+  position: relative;
+  margin: 0 16px 8px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  max-height: 120px;
+  flex-shrink: 0;
+
+  img {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
+    max-height: 120px;
+  }
+}
+
+.pendingRemove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.8);
+  }
+}
+
+// =============================================================================
+// Reply input — composer 카드
+// =============================================================================
+//
+// 레퍼런스(다크 글래스 챗 입력창)의 구성을 이 패널의 화이트 톤으로 옮긴다.
+// replyArea(textarea)와 replyToolbar(버튼 행)는 형제 엘리먼트라, .composer가
+// 둘을 감싸 하나의 둥근 카드로 묶고 위/아래 절반씩 radius를 나눠 이어 붙인다.
+
+.composer {
+  margin: 8px 10px 10px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.025);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  // 위쪽 옅은 흰 하이라이트 한 줄 — 유리면이 빛을 받는 느낌.
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  flex-shrink: 0;
+}
+
+.replyArea {
+  padding: 10px 14px 4px;
+}
+
+.replyInput {
+  width: 100%;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  font-family: inherit;
+  color: #1a1a1a;
+  resize: none;
+  padding: 0;
+  min-height: 36px;
+  max-height: 120px;
+  line-height: 1.55;
+  background: transparent;
+  transition: height 0.1s ease;
+
+  &::placeholder {
+    color: #9ca3af;
+  }
+}
+
+.replyToolbar {
+  display: flex;
+  align-items: center;
+  padding: 2px 8px 8px;
+  gap: 6px;
+}
+
+// 레퍼런스의 "+" 칩처럼 쉬는 상태에서도 옅은 원형 표면을 깔아둔다.
+.replyTool {
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: rgba(0, 0, 0, 0.03);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #6b7280;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  padding: 0;
+
+  &:hover {
+    background: #f3f4f6;
+    border-color: rgba(0, 0, 0, 0.1);
+    color: #374151;
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+// 레퍼런스의 마이크 버튼 자리 — 항상 보이는 원형 표면 + 입력이 있을 때만 강조.
+.replySend {
+  margin-left: auto;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: rgba(0, 0, 0, 0.03);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #9ca3af;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  padding: 0;
+
+  &:hover {
+    color: #3b82f6;
+  }
+
+  &.active {
+    background: rgba(59, 130, 246, 0.08);
+    border-color: rgba(59, 130, 246, 0.24);
+    color: #3b82f6;
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+// =============================================================================
+// Empty state
+// =============================================================================
+
+.empty {
+  padding: 24px 16px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+// =============================================================================
+// Status badge
+// =============================================================================
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: auto;
+
+  &.todo {
+    background: #fef3c7;
+    color: #92400e;
+  }
+  &.inProgress {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+  &.done {
+    background: #dcfce7;
+    color: #166534;
+  }
+}
+
+// =============================================================================
+// Lightbox
+// =============================================================================
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-out;
+
+  img {
+    max-width: 90vw;
+    max-height: 90vh;
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    cursor: default;
+  }
+}
+
+.lightboxClose {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover { background: rgba(255, 255, 255, 0.25); }
+}

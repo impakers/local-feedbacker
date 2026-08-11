@@ -1,0 +1,290 @@
+// =============================================================================
+// @impakers/debug — Debug Widget Styles
+// =============================================================================
+
+@use "../../styles/tokens" as t;
+@use "../../styles/glass" as g;
+
+// accent 폴백. 실제 값은 포털 루트에 --impakers-accent 로 주입된다
+// (debug-widget/index.tsx → settings.markerColor).
+$accent-fallback: #6366f1;
+
+// Protect stroke-based icons from host page rules
+.markersLayer,
+.fixedMarkersLayer {
+  @include g.protect-stroke-icons;
+}
+
+// =============================================================================
+// Animation Keyframes
+// =============================================================================
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes hoverHighlightIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes hoverTooltipIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+// =============================================================================
+// Hover Highlight
+// =============================================================================
+//
+// 예전에는 rgba(0,136,255,…) 하드코딩 파랑이라 사용자가 고른 마커 색과 어긋났다.
+// color-mix로 accent에서 투명도를 파생시키고, 미지원 브라우저는 accent 실색으로 폴백한다.
+
+.hoverHighlight {
+  position: fixed;
+  border: 2px solid var(--impakers-accent, #{$accent-fallback});
+  border-radius: 4px;
+  background-color: transparent;
+  pointer-events: none !important;
+  box-sizing: border-box;
+  will-change: opacity;
+  z-index: 99997;
+
+  @supports (background: color-mix(in srgb, red 50%, transparent)) {
+    border-color: color-mix(
+      in srgb,
+      var(--impakers-accent, #{$accent-fallback}) 55%,
+      transparent
+    );
+    background-color: color-mix(
+      in srgb,
+      var(--impakers-accent, #{$accent-fallback}) 6%,
+      transparent
+    );
+  }
+
+  &.enter {
+    animation: hoverHighlightIn 0.12s ease-out forwards;
+  }
+}
+
+.singleSelectOutline {
+  position: fixed;
+  border: 2px solid var(--impakers-accent, #{$accent-fallback});
+  border-radius: 4px;
+  pointer-events: none !important;
+  background-color: transparent;
+  box-sizing: border-box;
+  will-change: opacity;
+  z-index: 99997;
+
+  @supports (background: color-mix(in srgb, red 50%, transparent)) {
+    border-color: color-mix(
+      in srgb,
+      var(--impakers-accent, #{$accent-fallback}) 70%,
+      transparent
+    );
+    background-color: color-mix(
+      in srgb,
+      var(--impakers-accent, #{$accent-fallback}) 8%,
+      transparent
+    );
+  }
+
+  &.enter {
+    animation: fadeIn 0.15s ease-out forwards;
+  }
+}
+
+// =============================================================================
+// Hover Tooltip
+// =============================================================================
+
+.hoverTooltip {
+  position: fixed;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: t.$glass-dark-fg;
+  padding: 0.35rem 0.6rem;
+  border-radius: t.$r-sm;
+  pointer-events: none !important;
+  white-space: nowrap;
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  z-index: t.$z-fab;
+  font-family: t.$font-sans;
+
+  @include g.glass-dark(
+    $bg: t.$glass-dark-bg-strong,
+    $blur: t.$blur-sm,
+    $shadow: t.$shadow-1,
+    $fallback: t.$glass-dark-fallback-strong
+  );
+
+  &.enter {
+    animation: hoverTooltipIn 0.1s ease-out forwards;
+  }
+}
+
+.hoverReactPath {
+  font-size: 0.625rem;
+  color: t.$glass-dark-fg-muted;
+  margin-bottom: 0.15rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hoverElementName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// =============================================================================
+// Markers Layer
+// =============================================================================
+
+.markersLayer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 0;
+  z-index: 99998;
+  pointer-events: none;
+
+  > * {
+    pointer-events: auto;
+  }
+}
+
+.fixedMarkersLayer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 99998;
+  pointer-events: none;
+
+  > * {
+    pointer-events: auto;
+  }
+}
+
+// =============================================================================
+// Context Menu
+// =============================================================================
+
+.contextMenu {
+  position: fixed;
+  z-index: t.$z-top;
+  border-radius: t.$r-md;
+  padding: 4px;
+  min-width: 140px;
+  font-family: t.$font-sans;
+  animation: fadeIn 0.1s ease-out;
+
+  @include g.glass-dark(
+    $bg: t.$glass-dark-bg-strong,
+    $blur: t.$blur-md,
+    $shadow: t.$shadow-3,
+    $fallback: t.$glass-dark-fallback-strong
+  );
+}
+
+.contextMenuItem {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  font-size: 13px;
+  color: t.$glass-dark-fg;
+  text-align: left;
+  cursor: pointer;
+  border-radius: t.$r-sm;
+  font-family: inherit;
+  transition: background t.$dur-fast ease;
+
+  &:hover {
+    background: t.$glass-dark-hover;
+  }
+
+  &:active {
+    background: t.$glass-dark-active;
+  }
+}
+
+// =============================================================================
+// Success Toast
+// =============================================================================
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes toastOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.toast {
+  position: fixed;
+  bottom: 80px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  border-radius: t.$r-md;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: t.$glass-dark-fg;
+  z-index: 100000;
+  font-family: t.$font-sans;
+  animation: toastIn 0.2s ease-out, toastOut 0.3s ease-in 2.7s forwards;
+  max-width: 320px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  @include g.glass-dark(
+    $bg: t.$glass-dark-bg-strong,
+    $blur: t.$blur-md,
+    $shadow: t.$shadow-2,
+    $fallback: t.$glass-dark-fallback-strong
+  );
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  // 에러는 다크 글래스 위에서도 붉게 읽혀야 하므로 hairline과 글자색만 바꾼다.
+  &.toastError {
+    color: #fecaca;
+    @include g.glass-border(rgba(248, 113, 113, 0.38), t.$shadow-2);
+    animation: toastIn 0.2s ease-out, toastOut 0.3s ease-in 3.7s forwards;
+  }
+}
+
+// =============================================================================
+// Crosshair cursor when selecting
+// =============================================================================
+
+:global(html.impakers-selecting) {
+  cursor: crosshair !important;
+
+  * {
+    cursor: crosshair !important;
+  }
+}
