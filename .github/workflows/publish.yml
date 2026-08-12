@@ -1,0 +1,68 @@
+name: Publish
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsup.config.ts'
+      - 'tsconfig.json'
+      - 'vitest.config.ts'
+      - '.github/workflows/publish.yml'
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: '실제 배포 없이 확인만'
+        type: boolean
+        default: false
+
+concurrency:
+  group: publish-npm
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+
+      - run: npm ci
+
+      - run: npm test
+
+      - run: npm run build
+
+      - uses: JS-DevTools/npm-publish@v3
+        id: publish
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          package: package.json
+          access: public
+          dry-run: ${{ inputs.dry-run || false }}
+
+      - if: steps.publish.outputs.type == 'none'
+        run: echo "버전 변경 없음 — 배포 건너뜀 (${{ steps.publish.outputs.old-version }})" >> $GITHUB_STEP_SUMMARY
+
+      - if: steps.publish.outputs.type != 'none'
+        run: echo "배포됨 local-feedbacker@${{ steps.publish.outputs.version }} (${{ steps.publish.outputs.type }})" >> $GITHUB_STEP_SUMMARY
+
+      - if: steps.publish.outputs.type != 'none' && !inputs.dry-run
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/v${{ steps.publish.outputs.version }}',
+              sha: context.sha,
+            })
