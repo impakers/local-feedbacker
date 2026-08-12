@@ -314,6 +314,8 @@ export interface DebugWidgetLocalExtras {
   feedbackListRemoveAriaLabel?: string;
   /** 되짚기 패널의 삭제 버튼 aria-label. */
   recapDeleteAriaLabel?: string;
+  /** 원문이 남아 있지 않은 마커를 열었을 때 본문 자리에 뜨는 안내. */
+  recapMissingLabel?: string;
   /** 목록 패널의 "전체 내보내기" 선택 시 호출. 미지정이면 그 줄이 없다. */
   onExportAll?: () => Promise<{ ok: boolean; message?: string }>;
   /** 내보내기를 지원하는 브라우저인지. false 면 버튼 대신 안내 문구가 뜬다. */
@@ -1505,6 +1507,21 @@ export function DebugWidget({
     setActiveThread((current) => (current === id ? null : current));
   }, [localExtras]);
 
+  /**
+   * 로컬 모드에서 전부 지운다(설정 패널의 "전체 피드백 삭제").
+   *
+   * 저장소의 `clearAll` 은 origin 당 하나인 제출 원문만 비운다. 마커는 라우트별
+   * 키로 흩어져 있어 그대로 남고, 원문이 없으니 눌러도 되짚기 패널이 뜨지 않는
+   * 유령 핀이 된다 — 화면에서 지울 방법이 없어진다. 한 건 삭제
+   * (`handleRemoveLocalEntry`)와 같은 대칭으로 마커도 함께 걷는다.
+   */
+  const handleClearAllLocal = useCallback(() => {
+    localExtras?.onClearAll?.();
+    storage.clearMarkers();
+    setAnnotations([]);
+    setActiveThread(null);
+  }, [localExtras]);
+
   // v1.8: 메신저 스타일 읽음 마킹 — 본 코멘트 ID들을 서버에 read 처리
   const handleMarkCommentsRead = useCallback(async (taskId: string, commentIds: string[]) => {
     const readerId = feedbackerUser?.id ? String(feedbackerUser.id) : null;
@@ -1878,7 +1895,7 @@ export function DebugWidget({
               ? {
                 count: localExtras.pendingCount ?? 0,
                 label: localExtras.clearAllLabel || "전체 피드백 삭제",
-                onClear: localExtras.onClearAll,
+                onClear: handleClearAllLocal,
               }
               : undefined
           }
@@ -2097,15 +2114,19 @@ export function DebugWidget({
       {activeThread && !inboxEnabled && localExtras && (() => {
         const annotation = annotations.find((a) => a.id === activeThread);
         if (!annotation) return null;
-        // 보관 한도를 넘겨 잘렸거나 다른 세션에서 남긴 마커 — 조용히 아무것도 띄우지 않는다.
+
+        // 보관 한도(MAX_ENTRIES)를 넘겨 잘렸거나 다른 탭에서 비운 뒤 남은 마커.
+        // 여기서 조용히 null 을 돌려주면 눌러도 아무 일이 없는 데다 지울 방법까지
+        // 사라진다 — 원문이 없다고 말해 주고, 삭제 버튼은 그대로 남긴다.
         const text = localExtras.getEntryText(activeThread);
-        if (!text) return null;
+        const missing = !text;
 
         const { left, top, bottom } = getMarkerPanelAnchor(annotation);
 
         return (
           <LocalRecap
-            text={text}
+            text={text ?? (localExtras.recapMissingLabel || "원문을 찾을 수 없어요 — 이 핀만 지울 수 있어요")}
+            {...(missing ? { copyDisabled: true } : {})}
             left={left}
             top={top}
             bottom={bottom}

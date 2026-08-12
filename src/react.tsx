@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { DebugWidget, createLocalFeedbackStore, isVisibilityToggleShortcut, type SubmitFeedbackPayload } from "./widget/orbit";
+import { DebugWidget, createLocalFeedbackStore, isVisibilityToggleShortcut, setStorageNamespace, type SubmitFeedbackPayload } from "./widget/orbit";
 import { LANGUAGE_OPTIONS, getMessages, resolveLanguage } from "./i18n";
 import { buildFeedbackPrompt } from "./prompt/build-prompt";
 import { promptInputFromSubmission } from "./prompt/from-submission";
@@ -37,6 +37,12 @@ function storedLanguage(): FeedbackLanguage | null {
 }
 
 export function ImpakersFeedbackProvider(config: LocalFeedbackConfig) {
+  // Storage is per-origin, so apps sharing one origin would otherwise pool their
+  // feedback together. This has to run before anything reads storage — the store
+  // below and DebugWidget's own state initialiser both do, during this render.
+  // Idempotent, so a re-render (or StrictMode's double invoke) changes nothing.
+  setStorageNamespace(config.namespace);
+
   // Only the explicit pick is state. With nothing picked the language is still
   // derived per render from config/navigator exactly as before.
   const [picked, setPicked] = useState<FeedbackLanguage | null>(storedLanguage);
@@ -158,6 +164,7 @@ export function ImpakersFeedbackProvider(config: LocalFeedbackConfig) {
     feedbackListCopiedLabel: m.copied,
     feedbackListRemoveAriaLabel: m.remove,
     recapDeleteAriaLabel: m.remove,
+    recapMissingLabel: m.recapMissing,
     // Never throws; the panel reads the resolved result to say what happened.
     onExportAll: store.exportAll,
     exportSupported: store.supportsExport(),

@@ -20,6 +20,7 @@ import type {
 import { getCommentsCacheKey, getFeedbacksCacheKey } from "./api";
 import { storage, KEYS } from "./storage";
 import type { FileUploadResult } from "./types";
+import { buildZip, downloadBlob, type ZipEntry } from "../utils/zip";
 
 /** 로컬 제출 1건. 마커 id 로 되찾을 수 있게 id 를 마커와 공유한다. */
 export interface LocalFeedbackEntry {
@@ -34,21 +35,14 @@ export interface LocalFeedbackEntry {
   screenshot?: string;
 }
 
-// File System Access API 는 TypeScript lib.dom 버전마다 있기도 없기도 하고,
-// 지원 브라우저도 Chrome/Edge 뿐이다. 여기서 실제로 쓰는 표면만 구조적으로 적는다
-// (voice/use-speech-transcription 의 SpeechRecognitionLike 와 같은 방식).
-interface FileSystemWritableFileStreamLike {
-  write(data: string | Blob): Promise<void>;
-  close(): Promise<void>;
-}
-interface FileSystemFileHandleLike {
-  createWritable(): Promise<FileSystemWritableFileStreamLike>;
-}
-interface FileSystemDirectoryHandleLike {
-  getFileHandle(name: string, options?: { create?: boolean }): Promise<FileSystemFileHandleLike>;
-}
-
 const FILENAME_MAX = 60;
+
+/** 내보낸 zip 파일 이름에 붙일 `2026-08-11-1432` 꼴 시각. */
+function exportStamp(): string {
+  const now = new Date();
+  const pad = (n: number): string => String(n).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+}
 
 /** 파일 이름으로 쓸 수 없는 문자를 걷어낸다. 비면 기본 이름으로 떨어진다. */
 export function sanitizeFilename(label: string): string {
@@ -74,7 +68,7 @@ function toLabel(payload: SubmitFeedbackPayload): string {
 }
 
 function readEntries(): LocalFeedbackEntry[] {
-  const stored = storage.get(KEYS.LOCAL_ENTRIES);
+  const stored = storage.get(KEYS.LOCAL_ENTRIES());
   if (!stored) return [];
   try {
     const parsed = JSON.parse(stored);
@@ -86,14 +80,14 @@ function readEntries(): LocalFeedbackEntry[] {
 
 function writeEntries(entries: readonly LocalFeedbackEntry[]): void {
   const capped = entries.slice(-MAX_ENTRIES);
-  if (storage.trySet(KEYS.LOCAL_ENTRIES, JSON.stringify(capped))) return;
+  if (storage.trySet(KEYS.LOCAL_ENTRIES(), JSON.stringify(capped))) return;
 
   // 용량 초과. 자리를 차지하는 건 거의 항상 스크린샷이고, 정작 중요한 건 프롬프트
   // 원문이다 — 제출을 통째로 잃는 대신 오래된 절반의 이미지만 버리고 한 번 더 시도한다.
   // (`screenshot: undefined` 는 JSON.stringify 가 알아서 빼 준다)
   const half = Math.ceil(capped.length / 2);
   const degraded = capped.map((entry, index) => (index < half ? { ...entry, screenshot: undefined } : entry));
-  storage.trySet(KEYS.LOCAL_ENTRIES, JSON.stringify(degraded));
+  storage.trySet(KEYS.LOCAL_ENTRIES(), JSON.stringify(degraded));
 }
 
 export interface LocalFeedbackStoreConfig {
@@ -129,11 +123,12 @@ export interface LocalFeedbackStore extends FeedbackStore {
   removeEntry(id: string): void;
   /** 항목 수가 바뀌면 알려준다 (core/api 의 subscribeCache 와 같은 모양). */
   subscribe(listener: () => void): () => void;
-  /** File System Access API 가 있는 곳(Chrome/Edge)에서만 true. */
+  /** 내보내기를 할 수 있는지 — 평범한 다운로드라 사실상 언제나 true. */
   supportsExport(): boolean;
   /**
-   * 사용자가 고른 폴더에 항목마다 `.md` 한 개(+스크린샷이 있으면 같은 이름의 `.jpg`)를 쓴다.
-   * 취소·실패는 `{ok:false}` 로 돌아온다 — 던지지 않는다.
+   * 항목마다 `.md` 한 개(+스크린샷이 있으면 같은 이름의 `.jpg`)를 담은 zip 을
+   * 다운로드한다. 폴더 선택도 권한 대화상자도 없다.
+   * 빈 목록·실패는 `{ok:false}` 로 돌아온다 — 던지지 않는다.
    */
   exportAll(): Promise<{ ok: boolean; message?: string }>;
 }
@@ -215,50 +210,36 @@ export function createLocalFeedbackStore(config: LocalFeedbackStoreConfig): Loca
       };
     },
 
-    supportsExport: () => typeof window !== "undefined" && "showDirectoryPicker" in window,
+    // 평범한 다운로드라 못 하는 브라우저가 없다. 이 값은 이제 항상 참이지만,
+    // 호출부가 버튼을 감추는 분기를 그대로 두고 있어 인터페이스는 유지한다.
+    supportsExport: () => typeof window !== "undefined" && typeof URL.createObjectURL === "function",
 
     exportAll: async () => {
-      const w = window as unknown as {
-        showDirectoryPicker?: (options?: { startIn?: string }) => Promise<FileSystemDirectoryHandleLike>;
-      };
-      if (!w.showDirectoryPicker) return { ok: false, message: "unsupported" };
-
-      let dir: FileSystemDirectoryHandleLike;
-      try {
-        // 브라우저 기본 시작 위치(홈·바탕화면)는 Chrome 이 "시스템 파일이 있다"며 막는 곳이다.
-        // 다운로드 폴더는 그 제한에 걸리지 않는다. 모르는 값이면 브라우저가 조용히 무시한다.
-        dir = await w.showDirectoryPicker({ startIn: "downloads" });
-      } catch (err) {
-        // 사용자가 직접 닫은 것(AbortError)만 취소다 — 오류가 아니다. 그 밖의 거절은
-        // "그 위치는 고를 수 없다"는 뜻이라 화면에 알려 줘야 한다.
-        if (err instanceof DOMException && err.name === "AbortError") return { ok: false, message: "cancelled" };
-        return { ok: false, message: "rejected" };
-      }
-
       const entries = readEntries();
-      let index = 0;
-      for (const entry of entries) {
-        index += 1;
-        const base = `${String(index).padStart(3, "0")}-${sanitizeFilename(entry.label)}`;
-        try {
-          const mdHandle = await dir.getFileHandle(`${base}.md`, { create: true });
-          const mdWritable = await mdHandle.createWritable();
-          await mdWritable.write(entry.text);
-          await mdWritable.close();
+      if (entries.length === 0) return { ok: false, message: "empty" };
+
+      try {
+        const files: ZipEntry[] = [];
+        const encoder = new TextEncoder();
+        let index = 0;
+        for (const entry of entries) {
+          index += 1;
+          const base = `${String(index).padStart(3, "0")}-${sanitizeFilename(entry.label)}`;
+          files.push({ name: `${base}.md`, data: encoder.encode(entry.text) });
 
           if (entry.screenshot) {
-            // dataURL → Blob 은 fetch 가 표준으로 해 준다(직접 base64 를 풀지 않는다).
-            const blob = await (await fetch(entry.screenshot)).blob();
-            const imgHandle = await dir.getFileHandle(`${base}.jpg`, { create: true });
-            const imgWritable = await imgHandle.createWritable();
-            await imgWritable.write(blob);
-            await imgWritable.close();
+            // dataURL → 바이트는 fetch 가 표준으로 해 준다(직접 base64 를 풀지 않는다).
+            const buffer = await (await fetch(entry.screenshot)).arrayBuffer();
+            files.push({ name: `${base}.jpg`, data: new Uint8Array(buffer) });
           }
-        } catch {
-          // 한 건이 못 써졌다고 나머지까지 포기하지 않는다.
         }
+
+        downloadBlob(buildZip(files), `local-feedback-${exportStamp()}.zip`);
+        return { ok: true };
+      } catch {
+        // 여기까지 오는 건 스크린샷 디코딩 실패 정도다 — 폴더 권한 같은 건 이제 없다.
+        return { ok: false, message: "failed" };
       }
-      return { ok: true };
     },
 
     fetchFeedbacks: async (): Promise<FeedbackTask[]> => [],

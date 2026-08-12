@@ -34,3 +34,5 @@ export {
   type LocalFeedbackStoreConfig,
   type LocalFeedbackEntry,
 } from "./core/local-feedback-store";
+// 같은 origin 을 나눠 쓰는 앱들이 서로의 피드백을 보지 않게 하는 구분자.
+export { setStorageNamespace } from "./core/storage";

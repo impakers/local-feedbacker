@@ -101,8 +101,8 @@ export function FeedbackList({
     resetTimer.current = originalSetTimeout(() => setCopiedId(null), COPIED_MS);
   }, [getEntryText]);
 
-  // 폴더 선택은 브라우저가 거절할 수 있다(Chrome 은 홈·바탕화면 같은 곳을 막는다).
-  // 무엇이 일어났는지 여기서 말해 주지 않으면 사용자는 브라우저 대화상자만 보고 끝난다.
+  // 내보내기는 zip 다운로드 한 번이라 폴더 권한 같은 실패 경로가 없다. 남은 건
+  // 내보낼 게 없거나(빈 목록) 스크린샷 디코딩이 깨진 경우뿐이다.
   const handleExportAll = useCallback(async () => {
     if (!onExportAll) return;
     setExportStatus("exporting");
@@ -111,8 +111,8 @@ export function FeedbackList({
       setExportStatus("done");
       if (resetExportTimer.current) clearTimeout(resetExportTimer.current);
       resetExportTimer.current = originalSetTimeout(() => setExportStatus("idle"), EXPORT_DONE_MS);
-    } else if (result.message === "cancelled") {
-      setExportStatus("idle"); // 사용자가 스스로 닫았다 — 굳이 알릴 것이 없다.
+    } else if (result.message === "empty") {
+      setExportStatus("idle"); // 목록이 비었다 — 빈 화면이 이미 그렇게 말하고 있다.
     } else {
       setExportStatus("rejected"); // 다시 시도할 때까지 남겨 둔다(자동으로 지우지 않는다).
     }

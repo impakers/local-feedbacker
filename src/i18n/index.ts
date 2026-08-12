@@ -57,14 +57,16 @@ export interface FeedbackMessages {
   modalTitle: string;
   modalTrigger: string;
   modalLabel: string;
-  /** FAB/list action that writes every entry into a folder the user picks. */
+  /** Shown in place of the prompt when a marker outlived its stored text. */
+  recapMissing: string;
+  /** FAB/list action that downloads every entry as a single zip. */
   exportAll: string;
-  /** Replaces the export button outright where the File System Access API is missing. */
+  /** Replaces the export button outright where downloads are unavailable. */
   exportUnsupported: string;
-  /** Shown beside the export button while the picked folder is being written to. */
+  /** Shown beside the export button while the zip is being assembled. */
   exporting: string;
   exportDone: string;
-  /** The browser refused the picked location (Chrome blocks home/Desktop and the like). */
+  /** The zip could not be built (e.g. a screenshot failed to decode). */
   exportRejected: string;
 }
 
@@ -101,9 +103,10 @@ const messages: Record<FeedbackLanguage, FeedbackMessages> = {
     dictate: "Dictate", stopDictate: "Stop", dictateUnsupported: "Dictation isn't supported in this browser",
     micError: "Microphone unavailable", voiceTranscriptLabel: "Voice note transcript:",
     modalContext: "Modal context", modalTitle: "Title", modalTrigger: "Trigger", modalLabel: "Label",
+    recapMissing: "The original text is gone — you can still delete this pin",
     exportAll: "Export all", exportUnsupported: "Export isn't supported in this browser",
     exporting: "Exporting…", exportDone: "Export complete",
-    exportRejected: "That folder can't be used — try creating a new folder inside Downloads instead",
+    exportRejected: "Export failed — please try again",
   },
   es: {
     feedback: "Comentarios", clickedUi: "Interfaz seleccionada", confirmedSource: "Fuente de implementación confirmada — empieza aquí",
@@ -126,9 +129,10 @@ const messages: Record<FeedbackLanguage, FeedbackMessages> = {
     dictate: "Dictar", stopDictate: "Detener", dictateUnsupported: "El dictado no es compatible con este navegador",
     micError: "Micrófono no disponible", voiceTranscriptLabel: "Transcripción de la nota de voz:",
     modalContext: "Contexto del modal", modalTitle: "Título", modalTrigger: "Disparador", modalLabel: "Etiqueta",
+    recapMissing: "El texto original ya no está — aún puedes eliminar este marcador",
     exportAll: "Exportar todo", exportUnsupported: "Exportar no es compatible con este navegador",
     exporting: "Exportando…", exportDone: "Exportación completa",
-    exportRejected: "No se puede usar esa carpeta — intenta crear una carpeta nueva dentro de Descargas",
+    exportRejected: "La exportación falló — inténtalo de nuevo",
   },
   "zh-CN": {
     feedback: "反馈", clickedUi: "点击的界面", confirmedSource: "已确认的实现源 — 从这里开始",
@@ -151,9 +155,10 @@ const messages: Record<FeedbackLanguage, FeedbackMessages> = {
     dictate: "口述", stopDictate: "停止", dictateUnsupported: "此浏览器不支持语音听写",
     micError: "麦克风不可用", voiceTranscriptLabel: "语音备注转录：",
     modalContext: "弹窗上下文", modalTitle: "标题", modalTrigger: "触发器", modalLabel: "标签",
+    recapMissing: "原文已不存在 — 仍可删除此标记",
     exportAll: "导出全部", exportUnsupported: "此浏览器不支持导出",
     exporting: "导出中…", exportDone: "导出完成",
-    exportRejected: "无法使用该文件夹 — 请尝试在下载文件夹中新建一个文件夹",
+    exportRejected: "导出失败 — 请重试",
   },
   ko: {
     feedback: "피드백", clickedUi: "클릭한 UI", confirmedSource: "확정 구현 소스 — 여기서 시작",
@@ -176,9 +181,10 @@ const messages: Record<FeedbackLanguage, FeedbackMessages> = {
     dictate: "받아쓰기", stopDictate: "중지", dictateUnsupported: "이 브라우저는 받아쓰기를 지원하지 않습니다",
     micError: "마이크를 사용할 수 없습니다", voiceTranscriptLabel: "음성 메모 텍스트:",
     modalContext: "모달 컨텍스트", modalTitle: "제목", modalTrigger: "트리거", modalLabel: "라벨",
+    recapMissing: "원문을 찾을 수 없어요 — 이 핀만 지울 수 있어요",
     exportAll: "전체 내보내기", exportUnsupported: "이 브라우저는 내보내기를 지원하지 않습니다",
     exporting: "내보내는 중…", exportDone: "내보내기 완료",
-    exportRejected: "이 폴더는 선택할 수 없어요 — 다운로드 폴더 안에 새 폴더를 만들어 다시 시도해 보세요",
+    exportRejected: "내보내기에 실패했어요 — 다시 시도해 주세요",
   },
 };
 

@@ -30,4 +30,15 @@ export interface LocalFeedbackConfig {
    * production. Ctrl/Cmd+Shift+. toggles it either way.
    */
   defaultVisible?: boolean;
+  /**
+   * Name this app so its feedback stays its own.
+   *
+   * Storage is per-origin, so two apps that share an origin share one pile of
+   * feedback. That happens more often than it sounds: every local project run
+   * on `localhost:3000`, and any two apps mounted under one domain. Give each
+   * app a stable, distinct value — the package name is a good default.
+   *
+   * Leave it unset only when a single app owns the whole origin.
+   */
+  namespace?: string;
 }

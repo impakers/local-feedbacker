@@ -78,6 +78,14 @@ export async function captureFullPage(
       allowTaint: true,
       scale: 1,
       logging: false,
+      // body 를 넘기면 html2canvas 는 크롭 원점을 **문서 좌상단(0,0)** 으로 잡는다
+      // (renderOptions 의 `x = (opts.x ?? 0) + left`, body 는 left/top = 0).
+      // 그래서 width/height 만 뷰포트 크기로 줄이면 스크롤 위치와 상관없이 언제나
+      // 페이지 맨 위가 잘려 나온다 — 아래로 스크롤해서 남긴 피드백의 스크린샷이
+      // 엉뚱한 화면이 되는 원인. 지금 보고 있는 화면을 담으려면 스크롤 오프셋을
+      // 크롭 원점으로 함께 줘야 한다.
+      x: window.scrollX,
+      y: window.scrollY,
       width: window.innerWidth,
       height: window.innerHeight,
       onclone: (doc: Document) => sanitizeClonedDocForCapture(doc),

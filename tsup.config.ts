@@ -89,4 +89,25 @@ export default defineConfig([
     },
     banner: { js: '"use client";' },
   },
+  {
+    // Build-time plugins (Next.js/webpack config wrappers, the JSX-source
+    // AST loader). These run in the consumer's Node build process, not the
+    // browser, so they need Node's platform/builtins rather than being
+    // bundled for the client.
+    entry: ["src/next.ts", "src/webpack.ts", "src/jsx-source-loader.ts"],
+    format: ["cjs", "esm"],
+    dts: true,
+    clean: false,
+    platform: "node",
+    external: ["next", "webpack"],
+  },
+  {
+    // `local-feedbacker-strip-maps` postbuild CLI — see bin-strip-source-maps.ts
+    entry: ["src/bin-strip-source-maps.ts"],
+    format: ["cjs"],
+    dts: false,
+    clean: false,
+    platform: "node",
+    banner: { js: "#!/usr/bin/env node" },
+  },
 ]);

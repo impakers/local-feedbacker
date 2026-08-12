@@ -27,6 +27,11 @@ export interface LocalRecapProps {
   copiedLabel?: string;
   /** 제출 시 캡처된 화면(dataURL). 있으면 원문 위에 축소판으로 띄운다. */
   screenshot?: string | null;
+  /**
+   * 원문이 남아 있지 않은 마커(보관 한도 초과·다른 탭에서 비움)를 열었을 때 참.
+   * `text` 는 안내 문구라 복사할 것이 없으므로 복사 버튼을 감춘다 — 삭제는 남는다.
+   */
+  copyDisabled?: boolean;
   /** 주면 삭제 버튼이 생긴다. 미지정이면 버튼 자체가 없다(= 기존 동작). */
   onDelete?: () => void;
   /** 삭제 버튼의 aria-label. 미지정 시 기존 한국어 문구. */
@@ -46,6 +51,7 @@ export function LocalRecap({
   closeAriaLabel = "닫기",
   copiedLabel = "복사됨",
   screenshot,
+  copyDisabled = false,
   onDelete,
   deleteAriaLabel = "삭제",
   onClose,
@@ -106,13 +112,15 @@ export function LocalRecap({
             </svg>
           </button>
         )}
-        <button
-          type="button"
-          className={`${styles.copy} ${copied ? styles.copied : ""}`}
-          onClick={handleCopy}
-        >
-          {copied ? copiedLabel : copyLabel || "다시 복사"}
-        </button>
+        {!copyDisabled && (
+          <button
+            type="button"
+            className={`${styles.copy} ${copied ? styles.copied : ""}`}
+            onClick={handleCopy}
+          >
+            {copied ? copiedLabel : copyLabel || "다시 복사"}
+          </button>
+        )}
       </div>
     </div>
   );
