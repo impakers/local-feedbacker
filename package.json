@@ -1,6 +1,6 @@
 {
   "name": "local-feedbacker",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Local-first UI feedback prompts for coding agents",
   "license": "MIT",
   "repository": {
@@ -41,7 +41,9 @@
     "local-feedbacker-strip-maps": "./dist/bin-strip-source-maps.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "docs",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "tsup",

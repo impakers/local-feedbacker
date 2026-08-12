@@ -1,6 +1,6 @@
 # Local LLM bridge contract
 
-`@impakers/feedback` never calls a local server unless the host app provides `onSendToBridge` and the reviewer presses **Send to local bridge**. A bridge should bind only to loopback, validate payload size, and keep all Codex/Claude credentials and command execution on the local machine.
+`local-feedbacker` never calls a local server unless the host app provides `onSendToBridge` and the reviewer presses **Send to local bridge**. A bridge should bind only to loopback, validate payload size, and keep all Codex/Claude credentials and command execution on the local machine.
 
 The host callback receives:
 

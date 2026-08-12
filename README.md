@@ -41,6 +41,39 @@ Supported languages: English (`en`), Spanish (`es`), Simplified Chinese (`zh-CN`
 
 An optional `onSendToBridge` callback can send the reviewer-confirmed prompt to a user-owned local bridge. See [the local bridge contract](docs/local-bridge-contract.md).
 
+## Naming the file to edit
+
+Out of the box a prompt describes the element and the route. To have it name the
+file and line that rendered the element, wrap your Next config:
+
+```js
+// next.config.mjs
+import { withLocalFeedbacker } from "local-feedbacker/next";
+
+export default withLocalFeedbacker(nextConfig);
+```
+
+On Next 16, whose default bundler is Turbopack, add the postbuild step that keeps
+your source text out of the published source maps:
+
+```jsonc
+"scripts": { "build": "next build && local-feedbacker-strip-maps" }
+```
+
+[Source mapping](docs/source-mapping.md) covers the whole setup, plain webpack,
+and what changes when it is off.
+
+## Documentation
+
+| | |
+| --- | --- |
+| [Source mapping](docs/source-mapping.md) | How a clicked element resolves to a file and line, and how to set it up |
+| [Writing components](docs/writing-components.md) | Why a call site sometimes fails to reach the DOM, and how to author around it |
+| [Prompt format](docs/prompt-format.md) | What the copied document contains, section by section |
+| [Privacy](docs/privacy.md) | What is stored, what is requested, and what shipping source maps exposes |
+| [Local bridge contract](docs/local-bridge-contract.md) | The opt-in callback for handing a prompt to a local agent |
+| [Changelog](CHANGELOG.md) | |
+
 ---
 
 Built by [Impakers](https://www.impakers.club/local-feedbacker). MIT licensed — [issues and pull requests](https://github.com/impakers/local-feedbacker/issues) are welcome.
