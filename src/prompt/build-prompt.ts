@@ -17,6 +17,21 @@ export interface PromptInput {
   modal?: { title?: string; trigger?: string; label?: string };
 }
 
+/** Boundary between the instruction preamble and a feedback, and between feedbacks. */
+export const PROMPT_SEPARATOR = "\n\n---\n\n";
+
+/**
+ * Prepend the standing agent instructions to a finished document.
+ *
+ * They are not part of `buildFeedbackPrompt` because a "copy all" pastes many
+ * feedbacks at once and the instructions apply to the batch, not to each item —
+ * repeating them between every feedback only buries the actual requests.
+ */
+export function withAgentInstructions(document: string, language: FeedbackLanguage): string {
+  const m = getMessages(language);
+  return `# ${m.requestedBehavior}\n${m.inspectInstruction}\n${m.ambiguousInstruction}${PROMPT_SEPARATOR}${document}`;
+}
+
 function source(ref: SourceReference): string {
   return `\`${ref.file}${ref.line ? `:${ref.line}` : ""}${ref.column !== undefined ? `:${ref.column}` : ""}\``;
 }
@@ -42,5 +57,6 @@ export function buildFeedbackPrompt(input: PromptInput): string {
     ].filter(Boolean).join("\n")}`
     : "";
   const supporting = [`- ${m.route}: ${input.url}`, ...(input.inferred?.map((ref) => `- Inferred source: ${source(ref)}`) ?? [])].join("\n");
-  return `## ${m.feedback}: "${input.feedback}"\n\n## ${m.clickedUi}\n${clicked}${modal}${confirmed}\n\n## ${m.supportingContext}\n${supporting}\n\n## ${m.requestedBehavior}\n${m.inspectInstruction}\n${m.ambiguousInstruction}`;
+  // The feedback itself is the document title, so its own sections sit a level below it.
+  return `# ${m.feedback}: "${input.feedback}"\n\n## ${m.clickedUi}\n${clicked}${modal}${confirmed}\n\n## ${m.supportingContext}\n${supporting}`;
 }

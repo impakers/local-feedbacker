@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildFeedbackPrompt } from "./build-prompt";
+import { buildFeedbackPrompt, withAgentInstructions } from "./build-prompt";
 
 const base = {
   feedback: "Make the primary action easier to notice.",
@@ -12,9 +12,14 @@ const base = {
 };
 
 describe("buildFeedbackPrompt", () => {
-  it("collapses the feedback heading and its text onto one quoted line", () => {
+  it("titles the document with the feedback, above its own sections", () => {
     const prompt = buildFeedbackPrompt({ ...base, language: "en" });
-    expect(prompt.startsWith(`## Feedback: "Make the primary action easier to notice."\n\n## Clicked UI`)).toBe(true);
+    expect(prompt.startsWith(`# Feedback: "Make the primary action easier to notice."\n\n## Clicked UI`)).toBe(true);
+  });
+
+  it("leaves the agent instructions out so a batch is not told the same thing twice", () => {
+    const prompt = buildFeedbackPrompt({ ...base, language: "en" });
+    expect(prompt).not.toContain("Requested agent behavior");
   });
 
   it("puts the confirmed call site ahead of definition and supporting context", () => {
@@ -27,5 +32,19 @@ describe("buildFeedbackPrompt", () => {
     const prompt = buildFeedbackPrompt({ ...base, language: "en", confirmed: undefined });
     expect(prompt).not.toContain("Confirmed implementation source");
     expect(prompt).toContain("Supporting context");
+  });
+});
+
+describe("withAgentInstructions", () => {
+  it("puts the instructions on top of the document, in the widget's language", () => {
+    const decorated = withAgentInstructions(buildFeedbackPrompt({ ...base, language: "es" }), "es");
+    expect(decorated.startsWith("# Comportamiento solicitado al agente\n")).toBe(true);
+    expect(decorated.indexOf("Comportamiento solicitado")).toBeLessThan(decorated.indexOf("# Comentarios"));
+  });
+
+  it("says it once no matter how many feedbacks are pasted together", () => {
+    const one = buildFeedbackPrompt({ ...base, language: "en" });
+    const decorated = withAgentInstructions([one, one, one].join("\n\n---\n\n"), "en");
+    expect(decorated.split("Requested agent behavior")).toHaveLength(2);
   });
 });

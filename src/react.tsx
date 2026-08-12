@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { DebugWidget, createLocalFeedbackStore, isVisibilityToggleShortcut, setStorageNamespace, type SubmitFeedbackPayload } from "./widget/orbit";
 import { LANGUAGE_OPTIONS, getMessages, resolveLanguage } from "./i18n";
-import { buildFeedbackPrompt } from "./prompt/build-prompt";
+import { buildFeedbackPrompt, withAgentInstructions } from "./prompt/build-prompt";
 import { promptInputFromSubmission } from "./prompt/from-submission";
 import type { FeedbackLanguage, LocalFeedbackConfig } from "./types";
 import { useSpeechTranscription } from "./voice/use-speech-transcription";
@@ -97,11 +97,17 @@ export function ImpakersFeedbackProvider(config: LocalFeedbackConfig) {
     return buildFeedbackPrompt(promptInputFromSubmission(payload, { language: current.language, transcript: current.speech.transcript }));
   }, []);
 
+  // What gets stored is one feedback on its own; the standing agent instructions are
+  // put back on whatever is handed over — a single recap, an export, or every
+  // feedback at once — so a "copy all" carries them once at the top, not per item.
+  const decorateDocument = useCallback((text: string) => withAgentInstructions(text, latest.current.language), []);
+
   const store = useMemo(() => createLocalFeedbackStore({
     buildPrompt,
+    decorateDocument,
     onSubmit: (payload) => {
       const current = latest.current;
-      const prompt = buildPrompt(payload);
+      const prompt = decorateDocument(buildPrompt(payload));
       current.speech.reset();
       void (async () => {
         try { await navigator.clipboard.writeText(prompt); } catch { /* clipboard denied — onCopy/bridge still run */ }

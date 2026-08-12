@@ -98,6 +98,14 @@ export interface LocalFeedbackStoreConfig {
    * 없으면 이 어댑터는 예전처럼 아무것도 쌓지 않는다.
    */
   buildPrompt?: (payload: SubmitFeedbackPayload) => string;
+  /**
+   * 에이전트에게 건네는 문서 하나를 내보내기 직전에 한 번 감싼다(머리말 등).
+   *
+   * 보관하는 건 항목 본문뿐이고, 여러 항목을 이어 붙인 전체 복사본에도 머리말은
+   * **한 번만** 붙어야 한다 — 그래서 저장이 아니라 내보내는 길목에서 씌운다.
+   * 프롬프트 문법은 여전히 호출자의 몫이라 여기서는 문자열 변환으로만 다룬다.
+   */
+  decorateDocument?: (text: string) => string;
 }
 
 /**
@@ -140,6 +148,11 @@ export function createLocalFeedbackStore(config: LocalFeedbackStoreConfig): Loca
     listeners.forEach((listener) => listener());
   }
 
+  /** 내보내는 문서 하나에 머리말을 씌운다. 빈 문서에는 씌우지 않는다(머리말만 남는다). */
+  function decorate(text: string): string {
+    return text && config.decorateDocument ? config.decorateDocument(text) : text;
+  }
+
   return {
     capabilities: { inbox: false },
 
@@ -167,15 +180,19 @@ export function createLocalFeedbackStore(config: LocalFeedbackStoreConfig): Loca
       return { taskId: id };
     },
 
-    getEntryText: (id: string) => readEntries().find((entry) => entry.id === id)?.text ?? null,
+    getEntryText: (id: string) => {
+      const found = readEntries().find((entry) => entry.id === id);
+      return found ? decorate(found.text) : null;
+    },
 
     getEntryScreenshot: (id: string) => readEntries().find((entry) => entry.id === id)?.screenshot ?? null,
 
     getPendingCount: () => readEntries().length,
 
     copyAll: async () => {
-      // 프롬프트 첫 줄이 이미 `## 피드백: "..."` 이라 머리말이 같은 정보를 반복한다.
-      const combined = readEntries().map((entry) => entry.text).join(ENTRY_SEPARATOR);
+      // 항목마다 제목 줄(`# 피드백: "..."`)이 이미 있어 목차 격의 머리말은 두지 않는다.
+      // 에이전트 지시문은 decorate 가 문서 맨 앞에 한 번만 붙인다.
+      const combined = decorate(readEntries().map((entry) => entry.text).join(ENTRY_SEPARATOR));
       try {
         await navigator.clipboard.writeText(combined);
       } catch {
@@ -225,7 +242,8 @@ export function createLocalFeedbackStore(config: LocalFeedbackStoreConfig): Loca
         for (const entry of entries) {
           index += 1;
           const base = `${String(index).padStart(3, "0")}-${sanitizeFilename(entry.label)}`;
-          files.push({ name: `${base}.md`, data: encoder.encode(entry.text) });
+          // 파일 하나가 그대로 에이전트에게 건네지므로 지시문도 파일마다 들어간다.
+          files.push({ name: `${base}.md`, data: encoder.encode(decorate(entry.text)) });
 
           if (entry.screenshot) {
             // dataURL → 바이트는 fetch 가 표준으로 해 준다(직접 base64 를 풀지 않는다).
