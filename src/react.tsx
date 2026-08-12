@@ -23,6 +23,7 @@ const LANGUAGE_KEY = "impakers-feedback-language";
 
 // naked 도메인은 www 로 307 되돌린다 — 링크에 한 번 더 도는 주소를 싣지 않는다.
 const HOME_URL = "https://www.impakers.club";
+const REPO_URL = "https://github.com/impakers/local-feedbacker";
 
 /**
  * Path prefix for the project page per language.
@@ -146,14 +147,12 @@ export function ImpakersFeedbackProvider(config: LocalFeedbackConfig) {
       shortcutsHeading: m.shortcutsHeading,
       logout: m.logout,
     },
-    // The repository is private, so there is nowhere public to file an issue yet.
-    // Linking one anyway would 404 for every reader, and calling it open source
-    // while the code is unreadable is worse than saying nothing — so the second
-    // line stays off until the repo is public.
     credit: {
       madeBy: m.creditMadeBy,
       learnMore: m.creditLearnMore,
       homeUrl: `${HOME_URL}${HOME_PREFIX[language]}/local-feedbacker`,
+      contribute: m.creditContribute,
+      repoUrl: REPO_URL,
     },
     shortcutHints: [
       { keys: [{ label: "Ctrl", icon: "⌃" }, { label: "Shift", icon: "⇧" }, { label: "," }], label: m.shortcutFeedbackMode },

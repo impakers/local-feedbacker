@@ -40,3 +40,7 @@ The prompt distinguishes the clicked element and nearby copy from **confirmed im
 Supported languages: English (`en`), Spanish (`es`), Simplified Chinese (`zh-CN`), and Korean (`ko`).
 
 An optional `onSendToBridge` callback can send the reviewer-confirmed prompt to a user-owned local bridge. See [the local bridge contract](docs/local-bridge-contract.md).
+
+---
+
+Built by [Impakers](https://www.impakers.club/local-feedbacker). MIT licensed — [issues and pull requests](https://github.com/impakers/local-feedbacker/issues) are welcome.
