@@ -1,6 +1,6 @@
 {
   "name": "local-feedbacker",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Local-first UI feedback prompts for coding agents",
   "license": "MIT",
   "repository": {
