@@ -84,10 +84,10 @@ submission order, separated by `---`:
 Each feedback carries its own route and source references, so a single paste can
 span several screens without the agent having to ask which is which.
 
-Exporting produces the same documents as separate `.md` files — one per
-feedback, each with the instruction block, alongside any screenshots as `.jpg`
-with matching names. That form suits handing an agent a folder rather than a
-paste.
+Exporting downloads a zip of the same documents as separate `.md` files — one
+per feedback, each carrying the instruction block, alongside any screenshots as
+`.jpg` with matching names. That form suits handing an agent a directory rather
+than a paste.
 
 ## Language
 
