@@ -335,3 +335,23 @@
   color: #9ca3af;
   text-align: center;
 }
+
+// 제작자 표기. 설정값이 아니라 각주라서 버전과 같은 톤으로 낮춘다.
+.credit {
+  margin-bottom: 8px;
+  line-height: 1.55;
+
+  p {
+    margin: 0;
+  }
+
+  a {
+    color: #6b7280;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+
+    &:hover {
+      color: #374151;
+    }
+  }
+}

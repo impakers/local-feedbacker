@@ -13,7 +13,7 @@ export { DebugWidget, type DebugWidgetProps, type DebugWidgetLocalExtras } from 
 export { LocalRecap, type LocalRecapProps } from "./components/local-recap";
 export { FeedbackList, type FeedbackListProps, type FeedbackListEntry } from "./components/feedback-list";
 export { AnnotationMarker, PendingMarker } from "./components/annotation-marker";
-export { SettingsPanel, type SettingsPanelProps, type SettingsPanelLanguageSettings, type SettingsPanelLabels } from "./components/settings-panel";
+export { SettingsPanel, type SettingsPanelProps, type SettingsPanelLanguageSettings, type SettingsPanelLabels, type SettingsPanelCredit } from "./components/settings-panel";
 // `DebugWidgetProps.theme` / `SettingsPanelProps.theme` 를 타입으로 쓰기 위해 필요하다.
 // 로컬 모드는 이 값을 넘기지 않으므로 언제나 기본값("solid")으로 렌더된다.
 export type { DebugWidgetTheme } from "./core/types";

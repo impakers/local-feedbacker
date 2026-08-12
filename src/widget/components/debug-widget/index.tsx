@@ -49,7 +49,7 @@ import { LocalRecap } from "../local-recap";
 import { FeedbackList } from "../feedback-list";
 import { FabMenu, type FabMenuItem } from "../fab-menu";
 import { InboxPanel, type InboxItem } from "../inbox-panel";
-import { SettingsPanel, type SettingsPanelLanguageSettings, type SettingsPanelLabels } from "../settings-panel";
+import { SettingsPanel, type SettingsPanelLanguageSettings, type SettingsPanelLabels, type SettingsPanelCredit } from "../settings-panel";
 import { getServiceName } from "../../core/auth";
 import { loadSettings, saveSettings, type DebugSettings } from "../../core/settings";
 import { isFeedbackModeShortcut, type ShortcutHint } from "../../core/shortcuts";
@@ -272,6 +272,8 @@ export interface DebugWidgetLocalExtras {
   fabAriaLabel?: string;
   /** 설정 패널 문구 오버라이드. 미지정 필드는 기존 한국어 문구. */
   panelLabels?: SettingsPanelLabels;
+  /** 설정 패널 하단 제작자 표기. 로컬 모드에서만 넘어온다. */
+  credit?: SettingsPanelCredit;
   /** 설정 패널 "단축키 안내" 목록 오버라이드. 미지정 시 기본(한국어) 목록. */
   shortcutHints?: ShortcutHint[];
   /** 설정 패널의 "내가 추가한 것만 표시"를 감춘다. 로컬 모드에는 작성자가 없다. */
@@ -1900,6 +1902,7 @@ export function DebugWidget({
               : undefined
           }
           panelLabels={localExtras?.panelLabels}
+          {...(localExtras?.credit ? { credit: localExtras.credit } : {})}
           shortcutHints={localExtras?.shortcutHints}
           hideShowOnlyMine={!!localExtras?.hideShowOnlyMine}
         />

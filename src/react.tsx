@@ -21,6 +21,17 @@ declare const process: { env?: { NODE_ENV?: string } } | undefined;
 /** An explicit in-widget language pick outranks config/navigator and survives reloads. */
 const LANGUAGE_KEY = "impakers-feedback-language";
 
+// naked 도메인은 www 로 307 되돌린다 — 링크에 한 번 더 도는 주소를 싣지 않는다.
+const HOME_URL = "https://www.impakers.club";
+
+/**
+ * Path prefix for the project page per language.
+ *
+ * The site serves Korean at the root and prefixes the other two. It has no
+ * Chinese locale, so Chinese readers get the English page rather than a 404.
+ */
+const HOME_PREFIX: Record<FeedbackLanguage, string> = { ko: "", en: "/en", es: "/es", "zh-CN": "/en" };
+
 function isSupported(value: string | null): value is FeedbackLanguage {
   return LANGUAGE_OPTIONS.some((option) => option.value === value);
 }
@@ -134,6 +145,15 @@ export function ImpakersFeedbackProvider(config: LocalFeedbackConfig) {
       markerColor: m.markerColor,
       shortcutsHeading: m.shortcutsHeading,
       logout: m.logout,
+    },
+    // The repository is private, so there is nowhere public to file an issue yet.
+    // Linking one anyway would 404 for every reader, and calling it open source
+    // while the code is unreadable is worse than saying nothing — so the second
+    // line stays off until the repo is public.
+    credit: {
+      madeBy: m.creditMadeBy,
+      learnMore: m.creditLearnMore,
+      homeUrl: `${HOME_URL}${HOME_PREFIX[language]}/local-feedbacker`,
     },
     shortcutHints: [
       { keys: [{ label: "Ctrl", icon: "⌃" }, { label: "Shift", icon: "⇧" }, { label: "," }], label: m.shortcutFeedbackMode },

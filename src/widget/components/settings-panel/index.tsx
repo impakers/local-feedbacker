@@ -29,6 +29,25 @@ export interface SettingsPanelLabels {
   logout?: string;
 }
 
+/**
+ * 패널 맨 아래 제작자 표기. 로컬(OSS) 모드에서만 넘어온다 — 호스티드 위젯은
+ * 고객사 화면 안에서 도니 만든 곳을 광고할 자리가 아니다.
+ */
+export interface SettingsPanelCredit {
+  /** "임패커스가 만들었습니다" 한 줄. */
+  madeBy: string;
+  /** 소개 페이지 링크 문구. */
+  learnMore: string;
+  /** 소개 페이지 주소(언어에 맞춰 호출부가 고른다). */
+  homeUrl: string;
+  /**
+   * "오픈 소스입니다 — 이슈·PR 환영합니다" 한 줄. 둘 다 있을 때만 렌더한다 —
+   * 저장소가 비공개인 동안 링크를 걸면 모든 사용자에게 404 가 된다.
+   */
+  contribute?: string;
+  repoUrl?: string;
+}
+
 export interface SettingsPanelProps {
   settings: DebugSettings;
   onChange: (settings: DebugSettings) => void;
@@ -52,6 +71,8 @@ export interface SettingsPanelProps {
   };
   /** 로컬 모드 전용 문구 오버라이드. 미지정(호스티드)이면 기존 한국어 그대로. */
   panelLabels?: SettingsPanelLabels;
+  /** 로컬 모드 전용 제작자 표기. 미지정이면 아예 렌더하지 않는다. */
+  credit?: SettingsPanelCredit;
   /** 단축키 안내 목록 오버라이드. 미지정 시 기본(한국어) 목록. */
   shortcutHints?: ShortcutHint[];
   /**
@@ -71,6 +92,7 @@ export function SettingsPanel({
   languageSettings,
   clearAllSettings,
   panelLabels,
+  credit,
   shortcutHints = SHORTCUT_HINTS,
   hideShowOnlyMine = false,
 }: SettingsPanelProps) {
@@ -278,8 +300,28 @@ export function SettingsPanel({
             </button>
           )}
 
-          {/* 버전 (가장 하단) */}
-          <div className={styles.version}>v{process.env.PKG_VERSION}</div>
+          {/* 제작자 표기 + 버전 (가장 하단) */}
+          <div className={styles.version}>
+            {credit && (
+              <div className={styles.credit}>
+                <p>
+                  {credit.madeBy}{" "}
+                  <a href={credit.homeUrl} target="_blank" rel="noopener noreferrer">
+                    {credit.learnMore}
+                  </a>
+                </p>
+                {credit.contribute && credit.repoUrl && (
+                  <p>
+                    {credit.contribute}{" "}
+                    <a href={credit.repoUrl} target="_blank" rel="noopener noreferrer">
+                      GitHub
+                    </a>
+                  </p>
+                )}
+              </div>
+            )}
+            v{process.env.PKG_VERSION}
+          </div>
         </div>
       </div>
     </div>,

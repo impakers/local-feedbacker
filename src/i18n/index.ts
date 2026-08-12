@@ -59,6 +59,10 @@ export interface FeedbackMessages {
   modalLabel: string;
   /** Shown in place of the prompt when a marker outlived its stored text. */
   recapMissing: string;
+  /** Settings-panel footnote: who made this, and where to file issues. */
+  creditMadeBy: string;
+  creditLearnMore: string;
+  creditContribute: string;
   /** FAB/list action that downloads every entry as a single zip. */
   exportAll: string;
   /** Replaces the export button outright where downloads are unavailable. */
@@ -104,6 +108,8 @@ const messages: Record<FeedbackLanguage, FeedbackMessages> = {
     micError: "Microphone unavailable", voiceTranscriptLabel: "Voice note transcript:",
     modalContext: "Modal context", modalTitle: "Title", modalTrigger: "Trigger", modalLabel: "Label",
     recapMissing: "The original text is gone — you can still delete this pin",
+    creditMadeBy: "Built by Impakers.", creditLearnMore: "Learn more",
+    creditContribute: "Open source — issues and PRs are welcome:",
     exportAll: "Export all", exportUnsupported: "Export isn't supported in this browser",
     exporting: "Exporting…", exportDone: "Export complete",
     exportRejected: "Export failed — please try again",
@@ -130,6 +136,8 @@ const messages: Record<FeedbackLanguage, FeedbackMessages> = {
     micError: "Micrófono no disponible", voiceTranscriptLabel: "Transcripción de la nota de voz:",
     modalContext: "Contexto del modal", modalTitle: "Título", modalTrigger: "Disparador", modalLabel: "Etiqueta",
     recapMissing: "El texto original ya no está — aún puedes eliminar este marcador",
+    creditMadeBy: "Creado por Impakers.", creditLearnMore: "Más información",
+    creditContribute: "Código abierto — issues y PRs son bienvenidos:",
     exportAll: "Exportar todo", exportUnsupported: "Exportar no es compatible con este navegador",
     exporting: "Exportando…", exportDone: "Exportación completa",
     exportRejected: "La exportación falló — inténtalo de nuevo",
@@ -156,6 +164,8 @@ const messages: Record<FeedbackLanguage, FeedbackMessages> = {
     micError: "麦克风不可用", voiceTranscriptLabel: "语音备注转录：",
     modalContext: "弹窗上下文", modalTitle: "标题", modalTrigger: "触发器", modalLabel: "标签",
     recapMissing: "原文已不存在 — 仍可删除此标记",
+    creditMadeBy: "Impakers 开发。", creditLearnMore: "了解更多",
+    creditContribute: "开源项目 — 欢迎提交 issue 和 PR：",
     exportAll: "导出全部", exportUnsupported: "此浏览器不支持导出",
     exporting: "导出中…", exportDone: "导出完成",
     exportRejected: "导出失败 — 请重试",
@@ -182,6 +192,8 @@ const messages: Record<FeedbackLanguage, FeedbackMessages> = {
     micError: "마이크를 사용할 수 없습니다", voiceTranscriptLabel: "음성 메모 텍스트:",
     modalContext: "모달 컨텍스트", modalTitle: "제목", modalTrigger: "트리거", modalLabel: "라벨",
     recapMissing: "원문을 찾을 수 없어요 — 이 핀만 지울 수 있어요",
+    creditMadeBy: "임패커스가 만들었습니다.", creditLearnMore: "자세히 보기",
+    creditContribute: "오픈 소스입니다 — 이슈·PR 환영합니다:",
     exportAll: "전체 내보내기", exportUnsupported: "이 브라우저는 내보내기를 지원하지 않습니다",
     exporting: "내보내는 중…", exportDone: "내보내기 완료",
     exportRejected: "내보내기에 실패했어요 — 다시 시도해 주세요",
