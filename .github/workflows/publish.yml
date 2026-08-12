@@ -50,13 +50,14 @@ jobs:
           access: public
           dry-run: ${{ inputs.dry-run || false }}
 
-      - if: steps.publish.outputs.type == 'none'
+      # npm-publish v2+ 는 릴리즈가 없으면 type 을 'none' 이 아니라 빈 문자열로 낸다
+      - if: steps.publish.outputs.type == ''
         run: echo "버전 변경 없음 — 배포 건너뜀 (${{ steps.publish.outputs.old-version }})" >> $GITHUB_STEP_SUMMARY
 
-      - if: steps.publish.outputs.type != 'none'
+      - if: steps.publish.outputs.type != ''
         run: echo "배포됨 local-feedbacker@${{ steps.publish.outputs.version }} (${{ steps.publish.outputs.type }})" >> $GITHUB_STEP_SUMMARY
 
-      - if: steps.publish.outputs.type != 'none' && !inputs.dry-run
+      - if: steps.publish.outputs.type != '' && !inputs.dry-run
         uses: actions/github-script@v7
         with:
           script: |
