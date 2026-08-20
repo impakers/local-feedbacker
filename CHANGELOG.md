@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.1.6 — 2026-08-20
+
+### Fixed
+
+- Both widgets now work in an app that also installs `@impakers/debug`. This
+  package was forked from it and kept writing to names the other package owns,
+  so installing both left one of them broken:
+
+  - **Every widget rendered without styles.** Each `<style>` tag is looked up by
+    a fixed id and its contents replaced, and all eleven ids were shared with
+    `@impakers/debug`. Whichever module was evaluated last replaced the other's
+    rules wholesale, and because class names are content-hashed per package, the
+    loser's elements were left asking for rules no longer in the document — a
+    floating action button with no background, menu items with no chip behind
+    them, labels with no spacing between them.
+  - **The source manifests overwrote each other.** Both packages emitted
+    `impakers-debug-route-manifest.json` and `impakers-debug-src-manifest.json`
+    into `.next/static/chunks/`, so only one survived the build and the other
+    package's prompts silently lost the file and line they name.
+
+  The style ids are now prefixed `local-feedbacker-styles-`, and the manifests
+  ship as `local-feedbacker-route-manifest.json` and
+  `local-feedbacker-src-manifest.json`. Nothing changes for an app that installs
+  this package alone.
+
+### Known
+
+`localStorage` keys still carry the `impakers-debug-` prefix and overlap with
+`@impakers/debug` on `settings`, `hidden`, `token`, `user-data`, `task-seen`,
+and `history-last-seen`. Because `localStorage` is scoped per origin, this only
+bites when both widgets run on the *same* origin — a dev-only widget and a
+production one normally do not. Renaming these would orphan feedback that people
+have already saved, so it is left for a release that can migrate it.
+
 ## 0.1.5 — 2026-08-12
 
 ### Changed

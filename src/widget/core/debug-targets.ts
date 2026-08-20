@@ -1,6 +1,6 @@
 import type { DebugTarget, RouteDebugContext } from "./types";
 
-const NEXT_ROUTE_MANIFEST_URL = "/_next/static/chunks/impakers-debug-route-manifest.json";
+const NEXT_ROUTE_MANIFEST_URL = "/_next/static/chunks/local-feedbacker-route-manifest.json";
 
 type RouteFileKind = "page" | "layout";
 

@@ -16,7 +16,7 @@
 
 import type { DebugTarget } from "../core/types";
 
-const SRC_MANIFEST_URL = "/_next/static/chunks/impakers-debug-src-manifest.json";
+const SRC_MANIFEST_URL = "/_next/static/chunks/local-feedbacker-src-manifest.json";
 
 export const ATTR_DEFINITION = "data-imp";
 export const ATTR_CALLSITE = "data-imp-o";

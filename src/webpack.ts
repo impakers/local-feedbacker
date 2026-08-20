@@ -84,7 +84,7 @@ export class LocalFeedbackerSrcManifestPlugin {
         const chunksDir = /[\\/]static$/.test(normalized)
           ? path.join(normalized, "chunks")
           : path.join(normalized, "static", "chunks");
-        const manifestPath = path.join(chunksDir, "impakers-debug-src-manifest.json");
+        const manifestPath = path.join(chunksDir, "local-feedbacker-src-manifest.json");
         try {
           fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
           fs.writeFileSync(manifestPath, JSON.stringify({ version: 1, files }), "utf-8");

@@ -177,7 +177,7 @@ class RouteManifestPlugin {
 
         const manifestPath = path.join(
           resolveStaticChunksDir(path, outputPath),
-          "impakers-debug-route-manifest.json"
+          "local-feedbacker-route-manifest.json"
         );
 
         try {

@@ -138,7 +138,7 @@ The loader has two modes:
   because emitting a manifest needs a webpack plugin.
 
 The widget resolves IDs by fetching
-`/_next/static/chunks/impakers-debug-src-manifest.json`. If that request fails,
+`/_next/static/chunks/local-feedbacker-src-manifest.json`. If that request fails,
 IDs stay unresolved and the prompt simply omits the confirmed source rather
 than guessing.
 

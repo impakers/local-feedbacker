@@ -9,6 +9,13 @@ import type { Plugin } from "esbuild";
 const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, "package.json"), "utf-8"));
 const PKG_VERSION = JSON.stringify(pkg.version);
 
+// The id prefix for every injected <style> tag. It must be owned by this
+// package: the tag is looked up by id and its textContent overwritten, so any
+// other package using the same ids would have its rules wiped by whichever
+// module is evaluated last. Class names are content-hashed per package and so
+// do not survive that overwrite, leaving the loser's components unstyled.
+const STYLE_ID_PREFIX = "local-feedbacker-styles";
+
 // Custom SCSS CSS Modules plugin with SSR-safe style injection
 function scssModulesPlugin(): Plugin {
   return {
@@ -41,10 +48,10 @@ const css = ${JSON.stringify(css)};
 const classNames = ${JSON.stringify(classNames)};
 
 if (typeof document !== 'undefined') {
-  let style = document.getElementById('impakers-debug-styles-${styleId}');
+  let style = document.getElementById('${STYLE_ID_PREFIX}-${styleId}');
   if (!style) {
     style = document.createElement('style');
-    style.id = 'impakers-debug-styles-${styleId}';
+    style.id = '${STYLE_ID_PREFIX}-${styleId}';
     document.head.appendChild(style);
   }
   style.textContent = css;
@@ -57,10 +64,10 @@ export default classNames;
           const contents = `
 const css = ${JSON.stringify(css)};
 if (typeof document !== 'undefined') {
-  let style = document.getElementById('impakers-debug-styles-${styleId}');
+  let style = document.getElementById('${STYLE_ID_PREFIX}-${styleId}');
   if (!style) {
     style = document.createElement('style');
-    style.id = 'impakers-debug-styles-${styleId}';
+    style.id = '${STYLE_ID_PREFIX}-${styleId}';
     document.head.appendChild(style);
   }
   style.textContent = css;

@@ -3,7 +3,7 @@ import type { SourceReference } from "../prompt/build-prompt";
 const callsiteAttribute = "data-imp-o";
 const definitionAttribute = "data-imp";
 
-const manifestUrl = "/_next/static/chunks/impakers-debug-src-manifest.json";
+const manifestUrl = "/_next/static/chunks/local-feedbacker-src-manifest.json";
 
 async function sourceManifest(): Promise<Record<string, string>> {
   try {
