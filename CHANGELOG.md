@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.1.7 — 2026-08-21
+
+### Added
+
+- The prompt now names the screen, not only the URL that was visited. Alongside
+  `Route`, `## Supporting context` carries two new lines when the route manifest
+  resolves:
+
+  ```markdown
+  - Route: https://example.com/orders/8123
+  - Endpoint: /orders/[id]
+  - Route file: `app/orders/[id]/page.tsx`
+  ```
+
+  `Endpoint` is what makes two feedbacks left on `/orders/8123` and
+  `/orders/9004` recognisable as the same screen, and `Route file` is where a
+  page-level change belongs when the request is about the page rather than one
+  element in it. Both were already resolved for every submission and were being
+  dropped on the way to the prompt — the matched pattern was discarded outright,
+  and the route's file was flattened into an unlabelled `Inferred source` line.
+
+  The route file no longer also appears as `Inferred source`, so it is named
+  once. Apps without the route manifest are unchanged: `Route` alone, as before.
+
 ## 0.1.6 — 2026-08-20
 
 ### Fixed

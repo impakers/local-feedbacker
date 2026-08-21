@@ -18,8 +18,9 @@ is stable enough to build on, so this is what it contains and why.
 - Definition: `components/countdown.tsx:79:11`
 
 ## Supporting context
-- Route: https://example.com/
-- Inferred source: `app/(marketing)/page.tsx`
+- Route: https://example.com/orders/8123
+- Endpoint: /orders/[id]
+- Route file: `app/orders/[id]/page.tsx`
 ```
 
 The heading levels carry meaning. The feedback is the document title, because
@@ -34,7 +35,14 @@ Section by section:
 | `## Clicked UI`                  | yes            | Element, its text, nearby copy, ARIA label and role                |
 | `## Modal context`               | only in a modal | The modal's title, what opened it, and its label                  |
 | `## Confirmed implementation source` | only when instrumented | Build-time call site and definition — see [source mapping](source-mapping.md) |
-| `## Supporting context`          | yes            | The route, and any *inferred* source references                    |
+| `## Supporting context`          | yes            | The URL, the route pattern it matched, that route's file, and any *inferred* source references |
+
+`Route` is the URL as visited, so it is one instance of a screen. `Endpoint` is
+the route pattern that URL resolved to, which is what makes two feedbacks from
+`/orders/8123` and `/orders/9004` recognisable as the same screen. `Route file`
+is that route's own source file — the place to start when the change is about
+the page rather than one element in it. All three come from the route manifest
+and are absent when it is unavailable.
 
 The split between confirmed and supporting is the point of the whole format. A
 build-time attribute is a fact; a route-manifest guess is a lead. They are never

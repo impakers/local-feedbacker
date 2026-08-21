@@ -28,6 +28,34 @@ describe("buildFeedbackPrompt", () => {
     expect(prompt.indexOf("Definition")).toBeLessThan(prompt.indexOf("Supporting context"));
   });
 
+  it("names the screen, not just the URL that was visited", () => {
+    const prompt = buildFeedbackPrompt({
+      ...base,
+      language: "en",
+      url: "http://localhost:3000/orders/8123",
+      endpoint: { pattern: "/orders/[id]", file: "app/orders/[id]/page.tsx" },
+    });
+    expect(prompt).toContain("- Route: http://localhost:3000/orders/8123");
+    expect(prompt).toContain("- Endpoint: /orders/[id]");
+    expect(prompt).toContain("- Route file: `app/orders/[id]/page.tsx`");
+  });
+
+  it("keeps the route lines out when the manifest could not resolve one", () => {
+    const prompt = buildFeedbackPrompt({ ...base, language: "en" });
+    expect(prompt).not.toContain("Endpoint:");
+    expect(prompt).not.toContain("Route file:");
+  });
+
+  it("translates the route labels with everything else", () => {
+    const prompt = buildFeedbackPrompt({
+      ...base,
+      language: "ko",
+      endpoint: { pattern: "/orders/[id]", file: "app/orders/[id]/page.tsx" },
+    });
+    expect(prompt).toContain("- 엔드포인트: /orders/[id]");
+    expect(prompt).toContain("- 라우트 파일: `app/orders/[id]/page.tsx`");
+  });
+
   it("does not claim certainty when build-time references are absent", () => {
     const prompt = buildFeedbackPrompt({ ...base, language: "en", confirmed: undefined });
     expect(prompt).not.toContain("Confirmed implementation source");

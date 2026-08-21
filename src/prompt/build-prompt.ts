@@ -11,6 +11,15 @@ export interface PromptInput {
   confirmed?: { callsite?: SourceReference; definition?: SourceReference };
   inferred?: SourceReference[];
   /**
+   * Where in the app the feedback was left, beyond the raw URL.
+   *
+   * `pattern` is the route the URL resolved to (`/orders/[id]`), so a agent
+   * reading two feedbacks from `/orders/1` and `/orders/2` can tell they are
+   * the same screen. `file` is the route's own source file, which is the right
+   * place to start when the change is about the page rather than one element.
+   */
+  endpoint?: { pattern?: string; file?: string };
+  /**
    * Present only when the feedback was left inside a modal/overlay. The agent
    * cannot reach that screen by URL alone, so how it was opened matters.
    */
@@ -56,7 +65,14 @@ export function buildFeedbackPrompt(input: PromptInput): string {
       input.modal.label && `- ${m.modalLabel}: ${input.modal.label}`,
     ].filter(Boolean).join("\n")}`
     : "";
-  const supporting = [`- ${m.route}: ${input.url}`, ...(input.inferred?.map((ref) => `- Inferred source: ${source(ref)}`) ?? [])].join("\n");
+  const supporting = [
+    `- ${m.route}: ${input.url}`,
+    // The URL alone is an instance; the pattern is the screen, and the route
+    // file is where a page-level change belongs.
+    input.endpoint?.pattern && `- ${m.endpoint}: ${input.endpoint.pattern}`,
+    input.endpoint?.file && `- ${m.routeFile}: ${source({ file: input.endpoint.file })}`,
+    ...(input.inferred?.map((ref) => `- Inferred source: ${source(ref)}`) ?? []),
+  ].filter(Boolean).join("\n");
   // The feedback itself is the document title, so its own sections sit a level below it.
   return `# ${m.feedback}: "${input.feedback}"\n\n## ${m.clickedUi}\n${clicked}${modal}${confirmed}\n\n## ${m.supportingContext}\n${supporting}`;
 }

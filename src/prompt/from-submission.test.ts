@@ -44,7 +44,36 @@ describe("promptInputFromSubmission", () => {
       callsite: { file: "src/app/billing/page.tsx", line: 42, column: 6 },
       definition: { file: "src/components/ui/button.tsx", line: 18, column: 2 },
     });
-    expect(input.inferred).toEqual([{ file: "src/app/billing/page.tsx", line: undefined, column: undefined }]);
+    expect(input.inferred).toBeUndefined();
+  });
+
+  it("reads the screen from the route manifest rather than only the URL", () => {
+    const routed = {
+      ...payload,
+      metadata: {
+        ...payload.metadata,
+        routeDebug: { pathname: "/billing", matchedRoute: "/billing", source: "next-route-manifest" },
+      },
+    } as unknown as SubmitFeedbackPayload;
+
+    const input = promptInputFromSubmission(routed, { language: "en" });
+
+    expect(input.endpoint).toEqual({ pattern: "/billing", file: "src/app/billing/page.tsx" });
+  });
+
+  it("still reports the route file when no pattern was matched", () => {
+    const input = promptInputFromSubmission(payload, { language: "en" });
+
+    expect(input.endpoint).toEqual({ file: "src/app/billing/page.tsx" });
+  });
+
+  it("omits the endpoint entirely when the manifest gave nothing", () => {
+    const bare = {
+      ...payload,
+      metadata: { ...payload.metadata, debugTargets: undefined },
+    } as unknown as SubmitFeedbackPayload;
+
+    expect(promptInputFromSubmission(bare, { language: "en" }).endpoint).toBeUndefined();
   });
 
   it("maps the clicked UI and route from the widget submission", () => {

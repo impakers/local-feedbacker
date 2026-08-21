@@ -12,6 +12,8 @@ export interface FeedbackMessages {
   selectedText: string;
   nearbyCopy: string;
   route: string;
+  endpoint: string;
+  routeFile: string;
   inspectInstruction: string;
   ambiguousInstruction: string;
   select: string;
@@ -26,6 +28,7 @@ export interface FeedbackMessages {
   copyAllMenu: string;
   markersVisible: string;
   hideDoneMarkers: string;
+  captureEnabled: string;
   markerColor: string;
   shortcutsHeading: string;
   logout: string;
@@ -89,12 +92,12 @@ const messages: Record<FeedbackLanguage, FeedbackMessages> = {
   en: {
     feedback: "Feedback", clickedUi: "Clicked UI", confirmedSource: "Confirmed implementation source — start here",
     callsite: "Call site", definition: "Definition", supportingContext: "Supporting context", requestedBehavior: "Requested agent behavior",
-    element: "Element", selectedText: "Selected text", nearbyCopy: "Nearby copy", route: "Route",
+    element: "Element", selectedText: "Selected text", nearbyCopy: "Nearby copy", route: "Route", endpoint: "Endpoint", routeFile: "Route file",
     inspectInstruction: "Inspect the confirmed call site first. Preserve unrelated behavior.",
     ambiguousInstruction: "Ask a question if the requested visual or interaction change is ambiguous.",
     select: "Select UI", review: "Review prompt", copy: "Copy prompt", copied: "Copied", send: "Send to local bridge", describe: "Describe the change you want",
     language: "Language", settings: "Settings", clearAll: "Clear all feedback", copyAllMenu: "Copy all",
-    markersVisible: "Show markers", hideDoneMarkers: "Hide completed pins", markerColor: "Marker color",
+    markersVisible: "Show markers", hideDoneMarkers: "Hide completed pins", captureEnabled: "Capture screenshots", markerColor: "Marker color",
     shortcutsHeading: "Shortcuts", logout: "Log out",
     shortcutFeedbackMode: "Toggle feedback mode", shortcutVisibility: "Show/hide widget",
     shortcutCloseInput: "Close input → exit feedback mode",
@@ -117,12 +120,12 @@ const messages: Record<FeedbackLanguage, FeedbackMessages> = {
   es: {
     feedback: "Comentarios", clickedUi: "Interfaz seleccionada", confirmedSource: "Fuente de implementación confirmada — empieza aquí",
     callsite: "Lugar de llamada", definition: "Definición", supportingContext: "Contexto complementario", requestedBehavior: "Comportamiento solicitado al agente",
-    element: "Elemento", selectedText: "Texto seleccionado", nearbyCopy: "Texto cercano", route: "Ruta",
+    element: "Elemento", selectedText: "Texto seleccionado", nearbyCopy: "Texto cercano", route: "Ruta", endpoint: "Endpoint", routeFile: "Archivo de ruta",
     inspectInstruction: "Inspecciona primero el lugar de llamada confirmado. Conserva el comportamiento no relacionado.",
     ambiguousInstruction: "Haz una pregunta si el cambio visual o de interacción solicitado es ambiguo.",
     select: "Seleccionar UI", review: "Revisar prompt", copy: "Copiar prompt", copied: "Copiado", send: "Enviar al puente local", describe: "Describe el cambio que quieres",
     language: "Idioma", settings: "Configuración", clearAll: "Borrar todos los comentarios", copyAllMenu: "Copiar todo",
-    markersVisible: "Mostrar marcadores", hideDoneMarkers: "Ocultar pines completados", markerColor: "Color del marcador",
+    markersVisible: "Mostrar marcadores", hideDoneMarkers: "Ocultar pines completados", captureEnabled: "Capturar capturas de pantalla", markerColor: "Color del marcador",
     shortcutsHeading: "Atajos", logout: "Cerrar sesión",
     shortcutFeedbackMode: "Alternar modo de comentarios", shortcutVisibility: "Mostrar/ocultar widget",
     shortcutCloseInput: "Cerrar entrada → salir del modo de comentarios",
@@ -145,12 +148,12 @@ const messages: Record<FeedbackLanguage, FeedbackMessages> = {
   "zh-CN": {
     feedback: "反馈", clickedUi: "点击的界面", confirmedSource: "已确认的实现源 — 从这里开始",
     callsite: "调用位置", definition: "定义", supportingContext: "补充上下文", requestedBehavior: "对代理的请求行为",
-    element: "元素", selectedText: "选中文本", nearbyCopy: "附近文案", route: "路由",
+    element: "元素", selectedText: "选中文本", nearbyCopy: "附近文案", route: "路由", endpoint: "端点", routeFile: "路由文件",
     inspectInstruction: "请先检查已确认的调用位置。保留无关行为。",
     ambiguousInstruction: "如果所需的视觉或交互变更不明确，请先提问。",
     select: "选择界面", review: "检查提示词", copy: "复制提示词", copied: "已复制", send: "发送到本地桥接", describe: "描述你想要的变更",
     language: "语言", settings: "设置", clearAll: "清除全部反馈", copyAllMenu: "复制全部",
-    markersVisible: "显示标记", hideDoneMarkers: "隐藏已完成的图钉", markerColor: "标记颜色",
+    markersVisible: "显示标记", hideDoneMarkers: "隐藏已完成的图钉", captureEnabled: "截取屏幕截图", markerColor: "标记颜色",
     shortcutsHeading: "快捷键", logout: "退出登录",
     shortcutFeedbackMode: "切换反馈模式", shortcutVisibility: "显示/隐藏小部件",
     shortcutCloseInput: "关闭输入框 → 退出反馈模式",
@@ -173,12 +176,12 @@ const messages: Record<FeedbackLanguage, FeedbackMessages> = {
   ko: {
     feedback: "피드백", clickedUi: "클릭한 UI", confirmedSource: "확정 구현 소스 — 여기서 시작",
     callsite: "호출부", definition: "정의", supportingContext: "보조 컨텍스트", requestedBehavior: "에이전트 요청 사항",
-    element: "요소", selectedText: "선택한 텍스트", nearbyCopy: "주변 문구", route: "경로",
+    element: "요소", selectedText: "선택한 텍스트", nearbyCopy: "주변 문구", route: "경로", endpoint: "엔드포인트", routeFile: "라우트 파일",
     inspectInstruction: "확정된 호출부를 먼저 확인하고 관련 없는 동작은 유지하세요.",
     ambiguousInstruction: "요청한 시각 또는 상호작용 변경이 모호하면 질문하세요.",
     select: "UI 선택", review: "프롬프트 검토", copy: "프롬프트 복사", copied: "복사됨", send: "로컬 브리지로 보내기", describe: "원하는 변경을 설명하세요",
     language: "언어", settings: "설정", clearAll: "전체 피드백 삭제", copyAllMenu: "전체 복사",
-    markersVisible: "마커 표시", hideDoneMarkers: "완료 핀 숨기기", markerColor: "마커 색상",
+    markersVisible: "마커 표시", hideDoneMarkers: "완료 핀 숨기기", captureEnabled: "스크린샷 캡처", markerColor: "마커 색상",
     shortcutsHeading: "단축키 안내", logout: "로그아웃",
     shortcutFeedbackMode: "피드백 모드 켜기/끄기", shortcutVisibility: "위젯 표시/숨김",
     shortcutCloseInput: "입력창 닫기 → 피드백 모드 해제",

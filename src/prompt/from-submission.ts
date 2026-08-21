@@ -35,11 +35,16 @@ export function promptInputFromSubmission(
   // The widget already detected this for every submission; hosted mode reads it
   // server-side, local mode only ever saw it pass through untouched until now.
   const marker = (payload.feedbackMarker ?? {}) as Record<string, unknown>;
+  const routeDebug = payload.metadata.routeDebug;
   const targets: readonly DebugTarget[] = payload.metadata.debugTargets ?? [];
   const callsite = targets.find((target) => target.kind === "component-callsite");
   const definition = targets.find((target) => target.kind === "component-definition");
+  // Surfaced on its own line below, so leaving it in `inferred` would print it twice.
+  const routePage = targets.find((target) => target.kind === "route-page");
   const inferred = targets.filter(
-    (target) => !CONFIRMED_KINDS.includes(target.kind as (typeof CONFIRMED_KINDS)[number]),
+    (target) =>
+      !CONFIRMED_KINDS.includes(target.kind as (typeof CONFIRMED_KINDS)[number]) &&
+      target.kind !== "route-page",
   );
   const transcript = options.transcript?.trim();
 
@@ -55,6 +60,16 @@ export function promptInputFromSubmission(
       selector: text(element.domPath),
     },
     url: payload.metadata.url || payload.feedbackUrl || "",
+    // The URL is one instance of a screen; the matched pattern and the route's
+    // own file are what let an agent act on the screen itself.
+    ...(routeDebug?.matchedRoute || routePage
+      ? {
+        endpoint: {
+          ...(routeDebug?.matchedRoute ? { pattern: routeDebug.matchedRoute } : {}),
+          ...(routePage ? { file: routePage.file } : {}),
+        },
+      }
+      : {}),
     ...(callsite || definition
       ? {
         confirmed: {
