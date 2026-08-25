@@ -214,5 +214,8 @@ because `onSubmit`'s return is discarded.
 
 | Package | Delivers to |
 | --- | --- |
-| [`local-ticketer`](https://github.com/impakers/local-ticketer) | File-based tickets in the repo, and from there GitHub Issues, Linear, Notion, or Slack |
+| [`local-ticketer`](../packages/local-ticketer) | File-based tickets in the repo, and from there GitHub Issues, Linear, Notion, or Slack |
 | [`@impakers/jian`](https://github.com/impakers/impakers-jian) | The Impakers inbox, where an agent drafts a reply and opens a PR |
+
+`local-ticketer` is developed in this repository, under `packages/`. It is
+published separately and does not depend on this package at build time.
