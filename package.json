@@ -45,9 +45,12 @@
     "docs",
     "CHANGELOG.md"
   ],
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "build": "tsup",
-    "test": "vitest run"
+    "test": "vitest run && npm test --workspaces"
   },
   "peerDependencies": {
     "react": ">=18.0.0",
