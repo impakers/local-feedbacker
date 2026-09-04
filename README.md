@@ -33,6 +33,23 @@ Upgrading from a version without `namespace`? The first app to name itself adopt
 whatever was already stored, so nothing is lost. If that pile was already mixed,
 clear it from the widget's settings panel and start clean.
 
+## Keyboard
+
+Five chords work anywhere on the page, even with an input focused:
+
+| | |
+| --- | --- |
+| `Ctrl/Cmd+Shift+,` | Feedback mode |
+| `Ctrl/Cmd+Shift+.` | Show / hide the widget |
+| `Ctrl/Cmd+Shift+;` | Feedback list |
+| `Ctrl/Cmd+Shift+'` | Settings |
+| `Ctrl/Cmd+Shift+\` | All shortcuts |
+
+They are punctuation on purpose: `Ctrl+Shift+<letter>` is almost always taken
+by the browser. Once one of the widget's panels is open, single keys do the
+rest — press `?` there to see them all, or run any of them from that sheet.
+Single keys never fire while you are typing in your own app.
+
 ## What the prompt contains
 
 The prompt distinguishes the clicked element and nearby copy from **confirmed implementation source**. Confirmed call sites and definitions require the existing source-attribute instrumentation; without it, source context is intentionally labelled as supporting context rather than asserted as fact.

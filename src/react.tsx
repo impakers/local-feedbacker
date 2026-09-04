@@ -160,11 +160,23 @@ export function ImpakersFeedbackProvider(config: LocalFeedbackConfig) {
       contribute: m.creditContribute,
       repoUrl: REPO_URL,
     },
-    shortcutHints: [
-      { keys: [{ label: "Ctrl", icon: "⌃" }, { label: "Shift", icon: "⇧" }, { label: "," }], label: m.shortcutFeedbackMode },
-      { keys: [{ label: "Ctrl", icon: "⌃" }, { label: "Shift", icon: "⇧" }, { label: "." }], label: m.shortcutVisibility },
-      { keys: [{ label: "Esc", icon: "⎋" }], label: m.shortcutCloseInput },
-    ],
+    shortcutsTitle: m.shortcutsOpen,
+    shortcutLabels: {
+      "feedback-mode": m.shortcutFeedbackMode,
+      "toggle-widget": m.shortcutVisibility,
+      "feedback-list": m.feedbackList,
+      settings: m.settings,
+      shortcuts: m.shortcutsOpen,
+      "copy-all": m.copyAllMenu,
+      "export-all": m.exportAll,
+      "clear-all": m.clearAll,
+      "toggle-markers": m.markersVisible,
+      "toggle-hide-done": m.hideDoneMarkers,
+      "marker-color": m.markerColor,
+      close: m.shortcutCloseInput,
+    },
+    shortcutGroupLabels: { panels: m.groupPanels, feedback: m.groupFeedback, markers: m.groupMarkers, widget: m.groupWidget },
+    confirmClearAllLabel: m.confirmClearAll,
     commentLabel: m.feedback,
     settingsLabel: m.settings,
     fabAriaLabel: m.feedback,
@@ -205,6 +217,7 @@ export function ImpakersFeedbackProvider(config: LocalFeedbackConfig) {
   return <DebugWidget
     endpoint={LOCAL_ENDPOINT}
     store={store}
+    onHide={() => setVisible(false)}
     popoverPlaceholder={m.describe}
     popoverSubmitLabel={m.copy}
     localExtras={localExtras}

@@ -1,0 +1,171 @@
+@use "../../styles/glass" as g;
+
+// 설정 패널과 같은 자리·같은 판. 두 패널이 번갈아 뜨므로 형태가 같아야 한 물건으로 읽힌다.
+
+@keyframes sheetIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100005;
+}
+
+.sheet {
+  position: fixed;
+  bottom: 80px;
+  right: 24px;
+  width: 320px;
+  max-height: calc(100vh - 104px);
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+  z-index: 100006;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  animation: sheetIn 0.15s ease-out;
+  -webkit-font-smoothing: antialiased;
+
+  &.glass {
+    @include g.glass-light-pane;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 10px 16px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #18181b;
+}
+
+.closeBtn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+
+  &:hover { background: #f3f4f6; color: #18181b; }
+  &:focus-visible { outline: 2px solid #18181b; outline-offset: 1px; }
+}
+
+.list {
+  overflow-y: auto;
+  padding: 6px 8px 10px;
+  outline: none;
+}
+
+.group {
+  padding-top: 6px;
+}
+
+.groupLabel {
+  padding: 6px 8px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #9ca3af;
+}
+
+// 행 하나가 곧 버튼이다. 하이라이트는 키보드·마우스가 같은 상태를 공유한다.
+.row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 8px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  font-size: 13px;
+  color: #374151;
+
+  &:disabled { opacity: 0.45; cursor: default; }
+  &:focus-visible { outline: 2px solid #18181b; outline-offset: -2px; }
+}
+
+.highlighted:not(:disabled) {
+  background: #f3f4f6;
+  color: #18181b;
+}
+
+.destructive:not(:disabled) {
+  &.highlighted { background: #fee2e2; color: #b91c1c; }
+}
+
+// 확인 대기: 행 전체가 경고색이 되고 문구가 바뀐다. 두 번째 입력이 곧 실행이다.
+.armed {
+  background: #fee2e2 !important;
+  color: #b91c1c !important;
+  font-weight: 500;
+}
+
+.rowLabel {
+  min-width: 0;
+  line-height: 1.35;
+}
+
+.rowKeys {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.caps {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.capGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.capSep {
+  font-size: 10px;
+  color: #9ca3af;
+}
+
+.cap {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 5px;
+  border: 1px solid #e5e7eb;
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: #f9fafb;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  line-height: 1.4;
+  color: #374151;
+  white-space: nowrap;
+}
+
+.capIcon {
+  color: #9ca3af;
+}

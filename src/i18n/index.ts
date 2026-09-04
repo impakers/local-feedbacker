@@ -75,6 +75,15 @@ export interface FeedbackMessages {
   exportDone: string;
   /** The zip could not be built (e.g. a screenshot failed to decode). */
   exportRejected: string;
+  /** Action that opens the sheet listing every command with its key. */
+  shortcutsOpen: string;
+  /** Inline confirm that replaces the native dialog for the destructive action. */
+  confirmClearAll: string;
+  /** Group headings in the shortcut sheet. */
+  groupPanels: string;
+  groupFeedback: string;
+  groupMarkers: string;
+  groupWidget: string;
 }
 
 /**
@@ -116,6 +125,9 @@ const messages: Record<FeedbackLanguage, FeedbackMessages> = {
     exportAll: "Export all", exportUnsupported: "Export isn't supported in this browser",
     exporting: "Exporting…", exportDone: "Export complete",
     exportRejected: "Export failed — please try again",
+    shortcutsOpen: "All shortcuts",
+    confirmClearAll: "Delete all feedback? Enter to confirm, Esc to cancel",
+    groupPanels: "Panels", groupFeedback: "Feedback", groupMarkers: "Markers", groupWidget: "Widget",
   },
   es: {
     feedback: "Comentarios", clickedUi: "Interfaz seleccionada", confirmedSource: "Fuente de implementación confirmada — empieza aquí",
@@ -144,6 +156,9 @@ const messages: Record<FeedbackLanguage, FeedbackMessages> = {
     exportAll: "Exportar todo", exportUnsupported: "Exportar no es compatible con este navegador",
     exporting: "Exportando…", exportDone: "Exportación completa",
     exportRejected: "La exportación falló — inténtalo de nuevo",
+    shortcutsOpen: "Todos los atajos",
+    confirmClearAll: "¿Borrar todos los comentarios? Enter para confirmar, Esc para cancelar",
+    groupPanels: "Paneles", groupFeedback: "Comentarios", groupMarkers: "Marcadores", groupWidget: "Widget",
   },
   "zh-CN": {
     feedback: "反馈", clickedUi: "点击的界面", confirmedSource: "已确认的实现源 — 从这里开始",
@@ -172,6 +187,9 @@ const messages: Record<FeedbackLanguage, FeedbackMessages> = {
     exportAll: "导出全部", exportUnsupported: "此浏览器不支持导出",
     exporting: "导出中…", exportDone: "导出完成",
     exportRejected: "导出失败 — 请重试",
+    shortcutsOpen: "全部快捷键",
+    confirmClearAll: "删除全部反馈？按 Enter 确认，Esc 取消",
+    groupPanels: "面板", groupFeedback: "反馈", groupMarkers: "标记", groupWidget: "小部件",
   },
   ko: {
     feedback: "피드백", clickedUi: "클릭한 UI", confirmedSource: "확정 구현 소스 — 여기서 시작",
@@ -200,6 +218,9 @@ const messages: Record<FeedbackLanguage, FeedbackMessages> = {
     exportAll: "전체 내보내기", exportUnsupported: "이 브라우저는 내보내기를 지원하지 않습니다",
     exporting: "내보내는 중…", exportDone: "내보내기 완료",
     exportRejected: "내보내기에 실패했어요 — 다시 시도해 주세요",
+    shortcutsOpen: "모든 단축키",
+    confirmClearAll: "전체 피드백을 삭제할까요? Enter 확인 · Esc 취소",
+    groupPanels: "패널", groupFeedback: "피드백", groupMarkers: "마커", groupWidget: "위젯",
   },
 };
 

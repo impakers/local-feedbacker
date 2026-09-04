@@ -50,9 +50,23 @@ import { FeedbackList } from "../feedback-list";
 import { FabMenu, type FabMenuItem } from "../fab-menu";
 import { InboxPanel, type InboxItem } from "../inbox-panel";
 import { SettingsPanel, type SettingsPanelLanguageSettings, type SettingsPanelLabels, type SettingsPanelCredit } from "../settings-panel";
+import { CommandSheet, type CommandSheetAction } from "../command-sheet";
 import { getServiceName } from "../../core/auth";
-import { loadSettings, saveSettings, type DebugSettings } from "../../core/settings";
-import { isFeedbackModeShortcut, type ShortcutHint } from "../../core/shortcuts";
+import { MARKER_COLORS, loadSettings, saveSettings, type DebugSettings } from "../../core/settings";
+import {
+  DEFAULT_ACTION_LABELS,
+  WIDGET_ACTIONS,
+  chordCaps,
+  getWidgetAction,
+  isEditableTarget,
+  matchGlobalChord,
+  matchPanelKey,
+  panelKeyCaps,
+  shortcutBadge,
+  type ShortcutHint,
+  type WidgetActionGroup,
+  type WidgetActionId,
+} from "../../core/shortcuts";
 import { storage, KEYS } from "../../core/storage";
 import styles from "./styles.module.scss";
 
@@ -276,6 +290,14 @@ export interface DebugWidgetLocalExtras {
   credit?: SettingsPanelCredit;
   /** 설정 패널 "단축키 안내" 목록 오버라이드. 미지정 시 기본(한국어) 목록. */
   shortcutHints?: ShortcutHint[];
+  /** 단축키 시트 제목. */
+  shortcutsTitle?: string;
+  /** 동작별 라벨(시트·툴팁). 빠진 id 는 한국어 기본값. */
+  shortcutLabels?: Partial<Record<WidgetActionId, string>>;
+  /** 시트의 묶음 제목. */
+  shortcutGroupLabels?: Record<WidgetActionGroup, string>;
+  /** 전체 삭제가 확인을 기다리는 동안 버튼·행에 대신 보이는 문구. */
+  confirmClearAllLabel?: string;
   /** 설정 패널의 "내가 추가한 것만 표시"를 감춘다. 로컬 모드에는 작성자가 없다. */
   hideShowOnlyMine?: boolean;
   /** 팝오버 취소 버튼 라벨. 미지정 시 기존 한국어 문구. */
@@ -477,6 +499,15 @@ export function DebugWidget({
   const [showInbox, setShowInbox] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showFeedbackList, setShowFeedbackList] = useState(false);
+  const [showCommands, setShowCommands] = useState(false);
+  // 전체 삭제는 두 번이다. 첫 입력이 켜고, 4초 안에 두 번째 입력이 없으면 저절로 풀린다.
+  const [clearAllArmed, setClearAllArmed] = useState(false);
+  const clearAllTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 성공 토스트에 제출 문구 대신 띄울 한 줄(복사됨·내보내기 완료).
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  useEffect(() => () => {
+    if (clearAllTimerRef.current) clearTimeout(clearAllTimerRef.current);
+  }, []);
   const [settings, setSettings] = useState<DebugSettings>(() => loadSettings());
   const [routePath, setRoutePath] = useState(() => window.location.pathname);
   const [hasHydratedServerTasks, setHasHydratedServerTasks] = useState(false);
@@ -521,9 +552,12 @@ export function DebugWidget({
   // -------------------------------------------------------------------------
   // FAB menu handler
   // -------------------------------------------------------------------------
+  // executeAction 은 자신이 의존하는 핸들러들 뒤에 정의된다. FAB 는 그보다 앞에서
+  // 만들어지므로 최신 함수를 ref 로 건네받는다.
+  const executeActionRef = useRef<(id: WidgetActionId, index?: number) => void>(() => {});
   const handleFabSelect = useCallback((id: string) => {
     if (id === "comment") {
-      toggleActive();
+      executeActionRef.current("feedback-mode");
     } else if (id === "inbox") {
       setShowInbox(true);
       // All 탭용 전체 피드백 로드
@@ -537,13 +571,13 @@ export function DebugWidget({
         setPendingAnnotation(null);
       }
     } else if (id === "settings") {
-      setShowSettings(true);
+      executeActionRef.current("settings");
     } else if (id === "copy-all") {
-      localExtras?.onCopyAll?.();
+      executeActionRef.current("copy-all");
     } else if (id === "feedback-list") {
-      setShowFeedbackList(true);
+      executeActionRef.current("feedback-list");
     }
-  }, [isActive, store, localExtras]);
+  }, [isActive, store]);
 
   const handleSettingsChange = useCallback((newSettings: DebugSettings) => {
     setSettings(newSettings);
@@ -776,33 +810,6 @@ export function DebugWidget({
     saveRouteAnnotations(annotations);
   }, [annotations]);
 
-  // -------------------------------------------------------------------------
-  // Ctrl/Cmd+Shift+, — 마우스 없이 피드백 모드 진입/해제
-  //
-  // 모달이나 필터 Popover 가 열려 있으면 FAB 클릭이 호스트의 dismiss 로 먹혀
-  // 피드백을 남길 수 없다. 그래서:
-  //   - window 의 **capture** 단계에 붙여 호스트(Radix 등)보다 먼저 가로챈다.
-  //   - 포커스가 입력창 안에 있어도 동작한다 (isFeedbackModeShortcut 참고).
-  //   - 포커스를 옮기지 않는다. focusin 이 발생하면 Radix DismissableLayer 가
-  //     "바깥으로 포커스 이탈"로 보고 오버레이를 닫아버린다.
-  // -------------------------------------------------------------------------
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (!isFeedbackModeShortcut(e)) return;
-
-      e.preventDefault();
-      e.stopPropagation();
-
-      // 우리 패널이 떠 있으면 먼저 정리 — 요소 선택을 가리기 때문
-      setShowInbox(false);
-      setShowSettings(false);
-      setShowFeedbackList(false);
-      toggleActive();
-    };
-    window.addEventListener("keydown", handler, true);
-    return () => window.removeEventListener("keydown", handler, true);
-  }, [toggleActive]);
-
   // Escape key: popover 닫기 → 선택모드 해제 (2단계)
   //
   // capture 단계에서 가로채고, 우리가 처리한 경우에만 전파를 끊는다. 그러지
@@ -811,6 +818,11 @@ export function DebugWidget({
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
+
+      // 설정·목록·단축키 시트가 떠 있거나 삭제 확인이 켜져 있으면 아래 디스패처가
+      // 맡는다. 둘 다 window capture 라 stopPropagation 으로는 서로를 못 막는다 —
+      // 여기서 물러나지 않으면 Esc 한 번에 패널과 피드백 모드가 같이 닫힌다.
+      if (showSettings || showFeedbackList || showCommands || clearAllArmed) return;
 
       // inbox 열려있으면 닫기
       if (showInbox) {
@@ -844,7 +856,7 @@ export function DebugWidget({
     };
     window.addEventListener("keydown", handler, true);
     return () => window.removeEventListener("keydown", handler, true);
-  }, [showInbox, pendingAnnotation, isActive]);
+  }, [showInbox, pendingAnnotation, isActive, showSettings, showFeedbackList, showCommands, clearAllArmed]);
 
   // -------------------------------------------------------------------------
   // Mouse move — hover highlight
@@ -1524,6 +1536,167 @@ export function DebugWidget({
     setActiveThread(null);
   }, [localExtras]);
 
+  // -------------------------------------------------------------------------
+  // 키보드로 닿는 모든 동작
+  //
+  // 동작은 한곳(executeAction)에서 실행되고, FAB·설정 패널·단축키 시트·키보드는
+  // 전부 그리로 모인다. 그래야 "복사됨" 토스트든 삭제 확인이든 어디서 시작해도 같다.
+  //
+  // 리스너는 window 의 **capture** 단계에 붙인다. 모달이나 필터 Popover 가 열려
+  // 있으면 호스트(Radix 등)가 먼저 먹어 버리기 때문이다. 포커스는 옮기지 않는다 —
+  // focusin 이 나면 Radix DismissableLayer 가 "바깥 이탈"로 보고 오버레이를 닫는다.
+  // -------------------------------------------------------------------------
+  const disarmClearAll = useCallback(() => {
+    if (clearAllTimerRef.current) clearTimeout(clearAllTimerRef.current);
+    clearAllTimerRef.current = null;
+    setClearAllArmed(false);
+  }, []);
+
+  const closeAllPanels = useCallback(() => {
+    setShowInbox(false);
+    setShowSettings(false);
+    setShowFeedbackList(false);
+    setShowCommands(false);
+  }, []);
+
+  const showSuccessToast = useCallback((message: string) => {
+    setToastMessage(message);
+    setShowToast(true);
+    originalSetTimeout(() => {
+      setShowToast(false);
+      setToastMessage(null);
+    }, 2000);
+  }, []);
+
+  const executeAction = useCallback((id: WidgetActionId, index?: number) => {
+    // 확인 대기 중에 다른 동작을 고르면 확인은 풀린다 — 마음이 바뀐 것이다.
+    if (id !== "clear-all" && clearAllArmed) disarmClearAll();
+
+    switch (id) {
+      case "feedback-mode":
+        // 패널이 요소 선택을 가리므로 먼저 걷는다.
+        closeAllPanels();
+        toggleActive();
+        break;
+      case "feedback-list": {
+        if (!localExtras?.listEntries) break;
+        const next = !showFeedbackList;
+        closeAllPanels();
+        setShowFeedbackList(next);
+        break;
+      }
+      case "settings": {
+        const next = !showSettings;
+        closeAllPanels();
+        setShowSettings(next);
+        break;
+      }
+      case "shortcuts": {
+        const next = !showCommands;
+        closeAllPanels();
+        setShowCommands(next);
+        break;
+      }
+      case "copy-all":
+        if (!localExtras?.onCopyAll) break;
+        void Promise.resolve(localExtras.onCopyAll()).then(() => {
+          showSuccessToast(localExtras.recapCopiedLabel || "복사됨");
+        });
+        break;
+      case "export-all":
+        if (!localExtras?.onExportAll || localExtras.exportSupported === false) break;
+        void localExtras.onExportAll().then((result) => {
+          if (result.ok) showSuccessToast(localExtras.exportDoneLabel || "내보내기 완료");
+          else showErrorToast(result.message || localExtras.exportRejectedLabel || "내보내기 실패");
+        });
+        break;
+      case "clear-all":
+        if (!localExtras?.onClearAll || !(localExtras.pendingCount ?? 0)) break;
+        if (clearAllArmed) {
+          disarmClearAll();
+          handleClearAllLocal();
+        } else {
+          setClearAllArmed(true);
+          clearAllTimerRef.current = originalSetTimeout(() => setClearAllArmed(false), 4000);
+        }
+        break;
+      case "toggle-markers":
+        handleSettingsChange({ ...settings, markersVisible: !settings.markersVisible });
+        break;
+      case "toggle-hide-done":
+        handleSettingsChange({ ...settings, hideDoneMarkers: !settings.hideDoneMarkers });
+        break;
+      case "marker-color": {
+        const color = MARKER_COLORS[index ?? -1];
+        if (color) handleSettingsChange({ ...settings, markerColor: color.value });
+        break;
+      }
+      case "toggle-widget":
+        // 이 코드가 실행된다는 것은 위젯이 보인다는 뜻이다. 다시 보이게 하는 쪽은
+        // 위젯이 마운트돼 있지 않아 react.tsx 가 맡는다.
+        onHide?.();
+        break;
+      case "close":
+        closeAllPanels();
+        break;
+    }
+  }, [
+    clearAllArmed, disarmClearAll, closeAllPanels, toggleActive, localExtras,
+    showFeedbackList, showSettings, showCommands, showSuccessToast, showErrorToast,
+    handleClearAllLocal, handleSettingsChange, settings, onHide,
+  ]);
+  useEffect(() => { executeActionRef.current = executeAction; });
+
+  // 확인 대기는 패널과 운명을 같이한다. 배경 클릭으로 패널이 닫혔는데 대기가 남으면,
+  // 호스트 폼에서 누른 Enter 가 피드백 전부를 지운다.
+  const surfaceOpen = showSettings || showFeedbackList || showCommands;
+  useEffect(() => {
+    if (!surfaceOpen && clearAllArmed) disarmClearAll();
+  }, [surfaceOpen, clearAllArmed, disarmClearAll]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // 1) 전역 코드 — 입력창 안에서도 듣는다. 수식어 조합이라 글자가 들어갈 일이 없다.
+      //    표시/숨김(⌃⇧.)은 react.tsx 가 처리한다: 숨겨진 동안은 이 컴포넌트가 없다.
+      const chord = matchGlobalChord(e);
+      if (chord && chord !== "toggle-widget") {
+        e.preventDefault();
+        e.stopPropagation();
+        executeAction(chord);
+        return;
+      }
+
+      // 2) 패널 키 — 우리 패널이 떠 있고 포커스가 입력창 밖일 때만. 그 밖에서는
+      //    호스트 앱의 글자 입력이므로 손대지 않는다. shadow DOM 안의 input 은
+      //    window 에서 보면 호스트 요소로 재지정되므로 composedPath 로 실물을 본다.
+      if (!surfaceOpen) return;
+      const target = (e.composedPath()[0] ?? e.target) as EventTarget | null;
+      if (isEditableTarget(target)) return;
+
+      // 3) 삭제 확인 대기 중의 Enter 는 확정, Esc 는 취소다.
+      if (clearAllArmed && (e.key === "Enter" || e.key === "Escape")) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.key === "Enter") executeAction("clear-all");
+        else disarmClearAll();
+        return;
+      }
+
+      const match = matchPanelKey(e);
+      if (!match) return;
+      // ⌫/Delete 는 호스트 요소(선택된 목록 항목, 캔버스 객체)가 자기 뜻으로 쓰는 키다.
+      // 그 요소에 포커스가 있으면 우리가 가로채지 않는다 — 삭제는 body 나 위젯 안에서만.
+      if (match.id === "clear-all" && target instanceof Element
+        && target !== document.body && target !== document.documentElement
+        && !target.closest("[data-impakers-debug]")) return;
+      e.preventDefault();
+      e.stopPropagation();
+      executeAction(match.id, match.index);
+    };
+    window.addEventListener("keydown", handler, true);
+    return () => window.removeEventListener("keydown", handler, true);
+  }, [executeAction, clearAllArmed, disarmClearAll, surfaceOpen]);
+
   // v1.8: 메신저 스타일 읽음 마킹 — 본 코멘트 ID들을 서버에 read 처리
   const handleMarkCommentsRead = useCallback(async (taskId: string, commentIds: string[]) => {
     const readerId = feedbackerUser?.id ? String(feedbackerUser.id) : null;
@@ -1609,8 +1782,27 @@ export function DebugWidget({
   // -------------------------------------------------------------------------
   // Render
   // -------------------------------------------------------------------------
+  // 시트에 늘어놓을 행. 이 모드에 없는 기능은 아예 빠지고, 지금 할 수 없는
+  // 기능(지울 것이 없음)은 남되 흐려진다 — 키가 있다는 사실은 알려야 한다.
+  const commandActions = useMemo<CommandSheetAction[]>(() => WIDGET_ACTIONS
+    .filter((action) => !action.local || !!localExtras)
+    .filter((action) => action.id !== "feedback-list" || !!localExtras?.listEntries)
+    .filter((action) => action.id !== "export-all" || (!!localExtras?.onExportAll && localExtras.exportSupported !== false))
+    .filter((action) => action.id !== "toggle-widget" || !!onHide)
+    .map((action) => ({
+      id: action.id,
+      group: action.group,
+      label: localExtras?.shortcutLabels?.[action.id] ?? DEFAULT_ACTION_LABELS[action.id],
+      chord: chordCaps(action),
+      key: panelKeyCaps(action),
+      disabled: action.id === "clear-all" && !(localExtras?.pendingCount ?? 0),
+      destructive: action.destructive,
+    })), [localExtras, onHide]);
+
   if (typeof document === "undefined") return null;
 
+  // FAB 툴팁에는 어디서나 되는 전역 코드만 적는다. 패널 키는 패널이 떠 있어야 듣는다.
+  const chordHint = (id: WidgetActionId) => (getWidgetAction(id).chord ? shortcutBadge(id) : undefined);
   const popupPos = getPopupPosition();
   const hoveredRect = hoveredTargetElement?.getBoundingClientRect();
 
@@ -1619,6 +1811,7 @@ export function DebugWidget({
     {
       id: "comment",
       label: localExtras?.commentLabel || "피드백",
+      hint: chordHint("feedback-mode"),
       active: isActive,
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1640,6 +1833,7 @@ export function DebugWidget({
     {
       id: "settings",
       label: localExtras?.settingsLabel || "설정",
+      hint: chordHint("settings"),
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="3" />
@@ -1661,6 +1855,7 @@ export function DebugWidget({
     {
       id: "feedback-list",
       label: localExtras?.feedbackListLabel || "피드백 목록",
+      hint: chordHint("feedback-list"),
       badge: localExtras?.pendingCount || undefined,
       icon: (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1897,7 +2092,9 @@ export function DebugWidget({
               ? {
                 count: localExtras.pendingCount ?? 0,
                 label: localExtras.clearAllLabel || "전체 피드백 삭제",
-                onClear: handleClearAllLocal,
+                confirmLabel: localExtras.confirmClearAllLabel,
+                armed: clearAllArmed,
+                onClear: () => executeAction("clear-all"),
               }
               : undefined
           }
@@ -1905,6 +2102,31 @@ export function DebugWidget({
           {...(localExtras?.credit ? { credit: localExtras.credit } : {})}
           shortcutHints={localExtras?.shortcutHints}
           hideShowOnlyMine={!!localExtras?.hideShowOnlyMine}
+          {...(localExtras ? {
+            onOpenShortcuts: () => executeAction("shortcuts"),
+            shortcutKeys: {
+              markersVisible: getWidgetAction("toggle-markers").key?.label,
+              hideDoneMarkers: getWidgetAction("toggle-hide-done").key?.label,
+              markerColor: getWidgetAction("marker-color").key?.label,
+              clearAll: getWidgetAction("clear-all").key?.label,
+              shortcuts: getWidgetAction("shortcuts").key?.label,
+            },
+          } : {})}
+        />
+      )}
+
+      {/* 모든 단축키 — 읽는 목록이 아니라 실행되는 시트 */}
+      {showCommands && (
+        <CommandSheet
+          title={localExtras?.shortcutsTitle || DEFAULT_ACTION_LABELS.shortcuts}
+          groupLabels={localExtras?.shortcutGroupLabels || { panels: "패널", feedback: "피드백", markers: "마커", widget: "위젯" }}
+          actions={commandActions}
+          onRun={(id) => executeAction(id)}
+          onClose={() => setShowCommands(false)}
+          armedId={clearAllArmed ? "clear-all" : null}
+          confirmLabel={localExtras?.confirmClearAllLabel}
+          closeAriaLabel={localExtras?.recapCloseAriaLabel}
+          theme={theme}
         />
       )}
 
@@ -2152,7 +2374,7 @@ export function DebugWidget({
             <polyline points="20 6 9 17 4 12" />
           </svg>
           <span>
-            {localExtras?.submitSuccessLabel || "피드백 생성이 완료되었습니다"}
+            {toastMessage ?? (localExtras?.submitSuccessLabel || "피드백 생성이 완료되었습니다")}
           </span>
         </div>
       )}
