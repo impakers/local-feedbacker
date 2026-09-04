@@ -535,10 +535,12 @@ export function DebugWidget({
   // 길게 눌러(long-press) 캡처가 발생하면, 뒤따르는 click은 무시한다(이중 생성 방지).
   const holdCapturedRef = useRef(false);
 
-  // 피드백 모드 진입 시 캡처 라이브러리를 미리 로드 → 클릭 즉시 캡처의 import 지연(레이스) 완화
+  // 피드백 모드 진입 시 캡처 라이브러리를 미리 로드 → 클릭 즉시 캡처의 import 지연(레이스) 완화.
+  // 캡처를 꺼 둔 사용자는 이 비용을 내지 않는다 — 캡처가 느려서 끈 경우가 많다.
+  // 다시 켜면 그 순간 로드된다(이 훅이 captureEnabled 에도 반응한다).
   useEffect(() => {
-    if (isActive) preloadCapture();
-  }, [isActive]);
+    if (isActive && settings.captureEnabled) preloadCapture();
+  }, [isActive, settings.captureEnabled]);
 
   // #2: 모달 오프너(트리거) 추적기 설치 — 접근성 트리거 없는 프로그램적 모달의 폴백 라벨용
   useEffect(() => installTriggerTracker(), []);
@@ -922,12 +924,12 @@ export function DebugWidget({
       // 오버레이(팝오버/모달) 안 피드백이면 "지금"(오버레이가 아직 열린 상태) 즉시 캡처를 시작한다.
       // 제출 시점 캡처는 그 사이 팝오버가 닫혀 실패하므로, 열린 순간의 스크린샷을 확보해 둔다.
       eagerCaptureRef.current = null;
-      if (isInModal) {
+      if (settings.captureEnabled && isInModal) {
         const overlayEl = findModalContainer(elementUnder);
         if (overlayEl) {
           eagerCaptureRef.current = captureElement(overlayEl, { quality: 0.5, maxScale: 1 }).catch(() => undefined);
         }
-      } else if (opts?.freezeViewport) {
+      } else if (settings.captureEnabled && opts?.freezeViewport) {
         // 캡처 단축키(C): 모달이 아닌 사라지는 오버레이(role=tooltip 등)는
         // 클릭 시점엔 이미 사라진다. 지금(보이는 동안) 뷰포트 전체를 프리즈.
         eagerCaptureRef.current = captureFullPage().catch(() => undefined);
@@ -1004,7 +1006,7 @@ export function DebugWidget({
         })();
       }
     },
-    [],
+    [settings.captureEnabled],
   );
 
   // -------------------------------------------------------------------------
@@ -1198,7 +1200,9 @@ export function DebugWidget({
           const eager = eagerCaptureRef.current;
           eagerCaptureRef.current = null;
           let capturePromise: Promise<string | undefined>;
-          if (eager) {
+          if (!settings.captureEnabled) {
+            capturePromise = Promise.resolve(undefined);
+          } else if (eager) {
             capturePromise = eager.then((shot) => shot ?? captureFullPage());
           } else {
             const modalEl = annotation.isInModal
@@ -1410,7 +1414,7 @@ export function DebugWidget({
         }
       })();
     },
-    [pendingAnnotation, submitting, endpoint, feedbackerUser, showErrorToast, store, inboxEnabled, localExtras],
+    [pendingAnnotation, submitting, endpoint, feedbackerUser, showErrorToast, store, inboxEnabled, localExtras, settings.captureEnabled],
   );
 
   const cancelAnnotation = useCallback(() => {
@@ -1625,6 +1629,9 @@ export function DebugWidget({
         break;
       case "toggle-hide-done":
         handleSettingsChange({ ...settings, hideDoneMarkers: !settings.hideDoneMarkers });
+        break;
+      case "toggle-capture":
+        handleSettingsChange({ ...settings, captureEnabled: !settings.captureEnabled });
         break;
       case "marker-color": {
         const color = MARKER_COLORS[index ?? -1];
@@ -2107,6 +2114,7 @@ export function DebugWidget({
             shortcutKeys: {
               markersVisible: getWidgetAction("toggle-markers").key?.label,
               hideDoneMarkers: getWidgetAction("toggle-hide-done").key?.label,
+              captureEnabled: getWidgetAction("toggle-capture").key?.label,
               markerColor: getWidgetAction("marker-color").key?.label,
               clearAll: getWidgetAction("clear-all").key?.label,
               shortcuts: getWidgetAction("shortcuts").key?.label,

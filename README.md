@@ -13,6 +13,39 @@ export function Feedback() {
 }
 ```
 
+## Connect your own submit function
+
+Feedback remains local by default, but `onSubmit` lets the host handle each
+completed item with any function — from `console.log` to an authenticated
+`fetch` request. It receives the copied prompt, the written feedback, the URL,
+and a screenshot when screenshot capture is enabled and succeeds.
+
+```tsx
+<ImpakersFeedbackProvider
+  onSubmit={(submission) => console.log(submission)}
+/>
+```
+
+```tsx
+<ImpakersFeedbackProvider
+  onSubmit={async (submission) => {
+    await fetch("/api/feedback", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(submission),
+    });
+  }}
+/>
+```
+
+The callback may be synchronous or async. Its failure never blocks local
+copying or storage; authentication, retry, and error reporting are owned by
+the host app. Screenshot capture can be turned off per browser in the widget's
+Settings panel, or with `P` while a panel is open.
+
+[Writing an onSubmit handler](docs/onsubmit.md) covers the payload, the size of
+a screenshot, and what a handler must not do.
+
 ## Running it in more than one app
 
 Feedback is stored in the browser, which scopes storage per origin — so two apps
@@ -69,6 +102,16 @@ import { withLocalFeedbacker } from "local-feedbacker/next";
 
 export default withLocalFeedbacker(nextConfig);
 ```
+
+> **Warning:** Production source mapping is best for Preview/Staging or an
+> access-controlled reviewer environment. It is an aid for feedback, not an
+> access-control mechanism: it must not be relied on to protect source-map or
+> route-manifest assets. This warning does not prevent the package from running.
+
+`npm i local-feedbacker` includes the package's `docs/` folder. After enabling
+mapping, read [Writing components](docs/writing-components.md): a wrapper must
+forward its received props to the rendered DOM element for the call-site
+`data-imp-o` attribute to survive.
 
 On Next 16, whose default bundler is Turbopack, add the postbuild step that keeps
 your source text out of the published source maps:

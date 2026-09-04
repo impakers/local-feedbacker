@@ -1,5 +1,45 @@
 # Changelog
 
+## 0.1.9 — 2026-09-04
+
+### Added
+
+- **`onSubmit`.** The widget can now hand each finished feedback to the host
+  app, which is free to do anything with it — `console.log` it, POST it to an
+  API, open an issue. It receives the finished prompt, the reviewer's text, the
+  URL, and the screenshot when there is one:
+
+  ```tsx
+  <ImpakersFeedbackProvider onSubmit={(submission) => console.log(submission)} />
+  ```
+
+  The handler is additive and cannot cost a reviewer their work: by the time it
+  runs the prompt is already on the clipboard and the feedback is already
+  stored, and a rejection is caught and ignored. `LocalFeedbackSubmission` is
+  exported for typing your own handler.
+  [Writing an onSubmit handler](docs/onsubmit.md) has the full contract — this
+  doc shipped in 0.1.7 and 0.1.8 describing an API that was not yet in those
+  builds; it now matches what the package actually exports.
+
+- **A screenshot capture toggle** in the settings panel, keyed to `P`. Turning
+  it off keeps the whole feedback flow working and simply sends no screenshot —
+  useful on a page where capture is slow, or where a screenshot must not leave
+  the browser. It defaults to on, including for existing users.
+
+### Fixed
+
+- The settings panel's toggles now announce themselves to a screen reader as
+  switches with an on/off state, instead of as unlabelled buttons.
+
+- Entering feedback mode no longer loads the screenshot library when screenshot
+  capture is turned off.
+
+### Docs
+
+- The Next source-mapping guide and `writing-components.md` now say plainly that
+  production mapping is for Preview/Staging or an access-controlled reviewer
+  environment: it is a feedback aid, not access control.
+
 ## 0.1.8 — 2026-09-04
 
 ### Added

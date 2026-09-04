@@ -8,6 +8,12 @@ export interface LocalFeedbackCapture {
   url: string;
 }
 
+/** A completed local feedback item that a host app may handle itself. */
+export interface LocalFeedbackSubmission extends LocalFeedbackCapture {
+  /** Present only while screenshot capture is enabled and succeeds. */
+  screenshot?: string;
+}
+
 /** Result returned by a user-owned local bridge callback. */
 export interface LocalBridgeResult {
   ok: boolean;
@@ -24,6 +30,12 @@ export interface LocalFeedbackConfig {
   language?: FeedbackLanguage;
   getLanguage?: () => string | undefined;
   onCopy?: (prompt: string) => void;
+  /**
+   * Called after a feedback item is created so the host can use any transport
+   * it wants (for example `console.log` or `fetch`). Rejections are ignored so
+   * a host integration never blocks local copy or storage.
+   */
+  onSubmit?: (submission: LocalFeedbackSubmission) => void | Promise<void>;
   onSendToBridge?: (capture: LocalFeedbackCapture) => Promise<LocalBridgeResult>;
   /**
    * Whether the widget is visible on mount. Defaults to visible outside

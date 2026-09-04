@@ -6,6 +6,11 @@ clicked element actually carries them" — because a prompt that names a shared
 component instead of the screen sends an agent to a file where a one-screen fix
 becomes an every-screen change.
 
+This guide is included when you install `local-feedbacker`
+(`node_modules/local-feedbacker/docs/`). Read it after enabling Next source
+mapping: prop forwarding is required for a component call site's `data-imp-o`
+attribute to reach the DOM.
+
 There are exactly two ways the call site goes missing, and both are things you
 can see in your own component code.
 
