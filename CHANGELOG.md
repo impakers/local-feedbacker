@@ -1,5 +1,52 @@
 # Changelog
 
+## 0.1.8 — 2026-09-04
+
+### Added
+
+- **Every action now has a key.** Five chords work anywhere on the page — the
+  two that existed, plus three more from the same punctuation family, chosen
+  because no browser binds them:
+
+  | | |
+  | --- | --- |
+  | `Ctrl/Cmd+Shift+,` | Feedback mode |
+  | `Ctrl/Cmd+Shift+.` | Show / hide the widget |
+  | `Ctrl/Cmd+Shift+;` | Feedback list |
+  | `Ctrl/Cmd+Shift+'` | Settings |
+  | `Ctrl/Cmd+Shift+\` | All shortcuts |
+
+  While one of the widget's own panels is open, single keys do the rest:
+  `F` feedback mode, `L` list, `S` settings, `C` copy all, `E` export all,
+  `M` markers, `D` hide completed pins, `1`–`6` marker colour, `H` hide the
+  widget, `?` all shortcuts, `Esc` close. They are deliberately scoped to the
+  widget's panels so a host app's typing is never intercepted.
+
+- **A command sheet** (`?` or `Ctrl/Cmd+Shift+\`) lists every action with its
+  key and runs it — arrow keys and Enter, or the key itself. It replaces the
+  read-only "shortcuts" list that was folded inside the settings panel.
+
+- Key hints on the FAB menu tooltips and beside each settings row.
+
+### Changed
+
+- **Clearing all feedback no longer uses `window.confirm`.** The first press
+  (button, `Backspace`, or `Delete`) arms the action and the button says so;
+  `Enter` or a second press confirms, `Esc` cancels, and it disarms by itself
+  after four seconds. The same two-step state is shared by the keyboard, the
+  settings button, and the command sheet.
+- `Esc` now closes the settings panel, the feedback list, and the command
+  sheet. It used to close only the inbox and the input popover.
+- "Copy all" and "Export all" confirm with a toast when triggered from the
+  keyboard or the FAB menu.
+- The settings panel is 320px wide (was 280px) so the marker-colour row fits
+  on one line beside its key hint, and so it matches the command sheet.
+
+### Fixed
+
+- The FAB context menu's "Hide widget" did nothing in local mode — the
+  provider never passed `onHide`. It now hides the widget, and `H` does too.
+
 ## 0.1.7 — 2026-08-21
 
 ### Added

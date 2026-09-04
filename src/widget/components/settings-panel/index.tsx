@@ -63,11 +63,33 @@ export interface SettingsPanelProps {
   hideAccount?: boolean;
   /** 로컬 모드 전용 언어 선택. 미지정(호스티드)이면 필드가 없다. */
   languageSettings?: SettingsPanelLanguageSettings;
-  /** 로컬 모드 전용. 남긴 피드백 전체 삭제. 미지정(호스티드)이면 버튼이 없다. */
+  /**
+   * 로컬 모드 전용. 남긴 피드백 전체 삭제. 미지정(호스티드)이면 버튼이 없다.
+   *
+   * 확인은 네이티브 대화상자가 아니라 **두 번 누르기**다. 첫 클릭(또는 ⌫)이 `armed`
+   * 를 켜고 버튼 문구가 `confirmLabel` 로 바뀐다; 그 상태에서 한 번 더 누르면 지운다.
+   * 상태를 부모가 들고 있는 이유: 키보드(⌫·Enter)와 이 버튼이 같은 확인을 공유해야
+   * "버튼으로 켜고 Enter 로 확정"이 성립한다.
+   */
   clearAllSettings?: {
     count: number;
     label: string;
+    confirmLabel?: string;
+    armed?: boolean;
     onClear: () => void;
+  };
+  /**
+   * 로컬 모드 전용. 주면 접힌 "단축키 안내" 대신 **모든 단축키 시트를 여는 한 줄**이
+   * 들어간다. 시트는 읽는 것이 아니라 실행하는 것이라 목록을 여기 중복해 두지 않는다.
+   */
+  onOpenShortcuts?: () => void;
+  /** 각 행 라벨 옆에 붙일 키 표기. 미지정 필드는 표기 없음. */
+  shortcutKeys?: {
+    markersVisible?: string;
+    hideDoneMarkers?: string;
+    markerColor?: string;
+    clearAll?: string;
+    shortcuts?: string;
   };
   /** 로컬 모드 전용 문구 오버라이드. 미지정(호스티드)이면 기존 한국어 그대로. */
   panelLabels?: SettingsPanelLabels;
@@ -95,6 +117,8 @@ export function SettingsPanel({
   credit,
   shortcutHints = SHORTCUT_HINTS,
   hideShowOnlyMine = false,
+  onOpenShortcuts,
+  shortcutKeys,
 }: SettingsPanelProps) {
   const user = getStoredUser();
   const serviceName = getServiceName();
@@ -172,24 +196,33 @@ export function SettingsPanel({
               필드 행으로 두면 같은 문구가 왼쪽 라벨과 버튼 안에 두 번 보인다. */}
           {clearAllSettings && (
             <button
-              className={styles.clearAllBtn}
+              className={`${styles.clearAllBtn} ${clearAllSettings.armed ? styles.armed : ""}`}
               type="button"
               disabled={clearAllSettings.count === 0}
-              onClick={() => {
-                if (window.confirm(clearAllSettings.label)) clearAllSettings.onClear();
-              }}
+              aria-live="polite"
+              onClick={clearAllSettings.onClear}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="3 6 5 6 21 6" />
                 <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
               </svg>
-              {`${clearAllSettings.label} (${clearAllSettings.count})`}
+              <span className={styles.clearAllText}>
+                {clearAllSettings.armed && clearAllSettings.confirmLabel
+                  ? clearAllSettings.confirmLabel
+                  : `${clearAllSettings.label} (${clearAllSettings.count})`}
+              </span>
+              {!clearAllSettings.armed && shortcutKeys?.clearAll && (
+                <kbd className={styles.hintKey}>{shortcutKeys.clearAll}</kbd>
+              )}
             </button>
           )}
 
           {/* 마커 표시 토글 */}
           <div className={styles.field}>
-            <div className={styles.fieldLabel}>{panelLabels?.markersVisible || "마커 표시"}</div>
+            <div className={styles.fieldLabel}>
+              {panelLabels?.markersVisible || "마커 표시"}
+              {shortcutKeys?.markersVisible && <kbd className={styles.hintKey}>{shortcutKeys.markersVisible}</kbd>}
+            </div>
             <button
               className={`${styles.toggle} ${settings.markersVisible ? styles.on : ""}`}
               onClick={handleToggleMarkers}
@@ -201,7 +234,10 @@ export function SettingsPanel({
 
           {/* 완료 핀 숨기기 */}
           <div className={styles.field}>
-            <div className={styles.fieldLabel}>{panelLabels?.hideDoneMarkers || "완료 핀 숨기기"}</div>
+            <div className={styles.fieldLabel}>
+              {panelLabels?.hideDoneMarkers || "완료 핀 숨기기"}
+              {shortcutKeys?.hideDoneMarkers && <kbd className={styles.hintKey}>{shortcutKeys.hideDoneMarkers}</kbd>}
+            </div>
             <button
               className={`${styles.toggle} ${settings.hideDoneMarkers ? styles.on : ""}`}
               onClick={handleToggleHideDone}
@@ -227,7 +263,10 @@ export function SettingsPanel({
 
           {/* 마커 색상 (할 일=연한 톤, 진행중=선택한 진한 색) */}
           <div className={styles.field}>
-            <div className={styles.fieldLabel}>{panelLabels?.markerColor || "마커 색상"}</div>
+            <div className={styles.fieldLabel}>
+              {panelLabels?.markerColor || "마커 색상"}
+              {shortcutKeys?.markerColor && <kbd className={styles.hintKey}>{shortcutKeys.markerColor}</kbd>}
+            </div>
             <div className={styles.colors}>
               {MARKER_COLORS.map((c) => (
                 <button
@@ -242,7 +281,20 @@ export function SettingsPanel({
             </div>
           </div>
 
-          {/* 단축키 안내 (접힘) */}
+          {/* 단축키: 로컬 모드는 실행되는 시트로 보내고, 호스티드는 접힌 목록 그대로 */}
+          {onOpenShortcuts ? (
+            <div className={styles.shortcuts}>
+              <button className={styles.shortcutsToggle} onClick={onOpenShortcuts} type="button">
+                <span>{panelLabels?.shortcutsHeading || "단축키 안내"}</span>
+                <span className={styles.shortcutsOpenKeys}>
+                  {shortcutKeys?.shortcuts && <kbd className={styles.hintKey}>{shortcutKeys.shortcuts}</kbd>}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </span>
+              </button>
+            </div>
+          ) : (
           <div className={styles.shortcuts}>
             <button
               className={styles.shortcutsToggle}
@@ -287,6 +339,7 @@ export function SettingsPanel({
               </ul>
             )}
           </div>
+          )}
 
           {/* 로그아웃 */}
           {!hideAccount && isUserAuth && onLogout && (

@@ -289,6 +289,19 @@
   opacity: 1;
 }
 
+// 툴팁 안의 키 캡. 다크 글래스 위라 밝은 테두리로만 구분한다.
+.tooltipKey {
+  margin-left: 8px;
+  padding: 1px 5px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  line-height: 1.4;
+  color: inherit;
+  opacity: 0.85;
+}
+
 // =============================================================================
 // Context Menu
 // =============================================================================

@@ -11,6 +11,8 @@ export interface FabMenuItem {
   label: string;
   badge?: number;
   active?: boolean;
+  /** 툴팁 오른쪽에 붙는 단축키 표기(예: `⌃⇧,`). 없으면 툴팁은 라벨만. */
+  hint?: string;
 }
 
 /**
@@ -193,7 +195,10 @@ export function FabMenu({ items, onSelect, onHide, onDoubleTap, hasUnread, agent
               data-impakers-debug=""
             >
               {item.icon}
-              <span className={styles.tooltip}>{item.label}</span>
+              <span className={styles.tooltip}>
+                {item.label}
+                {item.hint && <kbd className={styles.tooltipKey}>{item.hint}</kbd>}
+              </span>
               {item.badge && item.badge > 0 ? (
                 <span className={styles.badge}>{item.badge > 99 ? "99+" : item.badge}</span>
               ) : null}
