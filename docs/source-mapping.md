@@ -7,6 +7,12 @@ the file that actually renders that paragraph and starts there.
 This page explains where that path comes from, how to turn it on, and what you
 get when it is off.
 
+> **Warning:** Enable this mode primarily on Preview/Staging or an
+> access-controlled reviewer environment. Production browser source maps and
+> the emitted manifests are feedback aids, not access control; hiding the widget
+> does not protect those assets. This is guidance only and does not block builds
+> or runtime use.
+
 ## Two attributes, two different files
 
 At build time the loader puts a source location on every JSX element. The host
@@ -50,6 +56,11 @@ export default withLocalFeedbacker({
   // your existing config
 });
 ```
+
+After `npm i local-feedbacker`, this guide and
+[`writing-components.md`](writing-components.md) are available in the installed
+package's `docs/` folder. In particular, components must forward received props
+to the DOM for a component call site to remain visible in the rendered markup.
 
 Layering it under other config wrappers is fine:
 

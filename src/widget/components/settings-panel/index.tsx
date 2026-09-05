@@ -24,6 +24,7 @@ export interface SettingsPanelLabels {
   title?: string;
   markersVisible?: string;
   hideDoneMarkers?: string;
+  captureEnabled?: string;
   markerColor?: string;
   shortcutsHeading?: string;
   logout?: string;
@@ -87,6 +88,7 @@ export interface SettingsPanelProps {
   shortcutKeys?: {
     markersVisible?: string;
     hideDoneMarkers?: string;
+    captureEnabled?: string;
     markerColor?: string;
     clearAll?: string;
     shortcuts?: string;
@@ -129,6 +131,10 @@ export function SettingsPanel({
 
   const handleToggleHideDone = useCallback(() => {
     onChange({ ...settings, hideDoneMarkers: !settings.hideDoneMarkers });
+  }, [settings, onChange]);
+
+  const handleToggleCapture = useCallback(() => {
+    onChange({ ...settings, captureEnabled: !settings.captureEnabled });
   }, [settings, onChange]);
 
   const handleToggleShowOnlyMine = useCallback(() => {
@@ -227,6 +233,9 @@ export function SettingsPanel({
               className={`${styles.toggle} ${settings.markersVisible ? styles.on : ""}`}
               onClick={handleToggleMarkers}
               type="button"
+              role="switch"
+              aria-checked={settings.markersVisible}
+              aria-label={panelLabels?.markersVisible || "마커 표시"}
             >
               <span className={styles.toggleThumb} />
             </button>
@@ -242,6 +251,26 @@ export function SettingsPanel({
               className={`${styles.toggle} ${settings.hideDoneMarkers ? styles.on : ""}`}
               onClick={handleToggleHideDone}
               type="button"
+              role="switch"
+              aria-checked={settings.hideDoneMarkers}
+              aria-label={panelLabels?.hideDoneMarkers || "완료 핀 숨기기"}
+            >
+              <span className={styles.toggleThumb} />
+            </button>
+          </div>
+
+          <div className={styles.field}>
+            <div className={styles.fieldLabel}>
+              {panelLabels?.captureEnabled || "스크린샷 캡처"}
+              {shortcutKeys?.captureEnabled && <kbd className={styles.hintKey}>{shortcutKeys.captureEnabled}</kbd>}
+            </div>
+            <button
+              className={`${styles.toggle} ${settings.captureEnabled ? styles.on : ""}`}
+              onClick={handleToggleCapture}
+              type="button"
+              role="switch"
+              aria-checked={settings.captureEnabled}
+              aria-label={panelLabels?.captureEnabled || "스크린샷 캡처"}
             >
               <span className={styles.toggleThumb} />
             </button>
@@ -255,6 +284,9 @@ export function SettingsPanel({
                 className={`${styles.toggle} ${settings.showOnlyMine ? styles.on : ""}`}
                 onClick={handleToggleShowOnlyMine}
                 type="button"
+                role="switch"
+                aria-checked={settings.showOnlyMine}
+                aria-label="내가 추가한 것만 표시"
               >
                 <span className={styles.toggleThumb} />
               </button>

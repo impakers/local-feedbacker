@@ -35,6 +35,7 @@ export type WidgetActionId =
   | "clear-all"
   | "toggle-markers"
   | "toggle-hide-done"
+  | "toggle-capture"
   | "marker-color"
   | "close";
 
@@ -72,6 +73,7 @@ export const WIDGET_ACTIONS: readonly WidgetAction[] = [
   { id: "feedback-mode", group: "feedback", chord: { code: "Comma", keys: [",", "<"], label: "," }, key: { keys: ["f"], label: "F" } },
   { id: "copy-all", group: "feedback", key: { keys: ["c"], label: "C" }, local: true },
   { id: "export-all", group: "feedback", key: { keys: ["e"], label: "E" }, local: true },
+  { id: "toggle-capture", group: "feedback", key: { keys: ["p"], label: "P" } },
   { id: "clear-all", group: "feedback", key: { keys: ["Backspace", "Delete"], label: "⌫" }, destructive: true, local: true },
   { id: "feedback-list", group: "panels", chord: { code: "Semicolon", keys: [";", ":"], label: ";" }, key: { keys: ["l"], label: "L" }, local: true },
   { id: "settings", group: "panels", chord: { code: "Quote", keys: ["'", '"'], label: "'" }, key: { keys: ["s"], label: "S" } },
@@ -218,6 +220,7 @@ export const DEFAULT_ACTION_LABELS: Record<WidgetActionId, string> = {
   "clear-all": "전체 피드백 삭제",
   "toggle-markers": "마커 표시",
   "toggle-hide-done": "완료 핀 숨기기",
+  "toggle-capture": "스크린샷 캡처",
   "marker-color": "마커 색상",
   close: "입력창 닫기 → 피드백 모드 해제",
 };

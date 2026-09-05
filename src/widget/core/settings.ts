@@ -8,6 +8,8 @@ export interface DebugSettings {
   readonly markersVisible: boolean;
   readonly hideDoneMarkers: boolean;
   readonly showOnlyMine: boolean;
+  /** Whether submitted feedback includes a screenshot. */
+  readonly captureEnabled: boolean;
 }
 
 const DEFAULTS: Readonly<DebugSettings> = {
@@ -15,6 +17,7 @@ const DEFAULTS: Readonly<DebugSettings> = {
   markersVisible: true,
   hideDoneMarkers: false,
   showOnlyMine: false,
+  captureEnabled: true,
 };
 
 export function loadSettings(): DebugSettings {

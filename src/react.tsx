@@ -112,6 +112,16 @@ export function ImpakersFeedbackProvider(config: LocalFeedbackConfig) {
       void (async () => {
         try { await navigator.clipboard.writeText(prompt); } catch { /* clipboard denied — onCopy/bridge still run */ }
         current.config.onCopy?.(prompt);
+        try {
+          void Promise.resolve(current.config.onSubmit?.({
+            prompt,
+            feedback: payload.title,
+            url: payload.metadata.url || window.location.href,
+            screenshot: payload.screenshot,
+          })).catch(() => {});
+        } catch {
+          // A host hook must never block the local feedback path.
+        }
         if (!current.config.onSendToBridge) return;
         try { await current.config.onSendToBridge({ prompt, feedback: payload.title, url: window.location.href }); } catch { /* user-owned bridge failures stay local */ }
       })();
@@ -149,6 +159,7 @@ export function ImpakersFeedbackProvider(config: LocalFeedbackConfig) {
       title: m.settings,
       markersVisible: m.markersVisible,
       hideDoneMarkers: m.hideDoneMarkers,
+      captureEnabled: m.captureEnabled,
       markerColor: m.markerColor,
       shortcutsHeading: m.shortcutsHeading,
       logout: m.logout,
@@ -172,6 +183,7 @@ export function ImpakersFeedbackProvider(config: LocalFeedbackConfig) {
       "clear-all": m.clearAll,
       "toggle-markers": m.markersVisible,
       "toggle-hide-done": m.hideDoneMarkers,
+      "toggle-capture": m.captureEnabled,
       "marker-color": m.markerColor,
       close: m.shortcutCloseInput,
     },

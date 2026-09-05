@@ -3,4 +3,5 @@ export type {
   LocalBridgeResult,
   LocalFeedbackCapture,
   LocalFeedbackConfig,
+  LocalFeedbackSubmission,
 } from "./types";
