@@ -133,6 +133,7 @@ and what changes when it is off.
 | [Prompt format](docs/prompt-format.md) | What the copied document contains, section by section |
 | [Privacy](docs/privacy.md) | What is stored, what is requested, and what shipping source maps exposes |
 | [Local bridge contract](docs/local-bridge-contract.md) | The opt-in callback for handing a prompt to a local agent |
+| [Decision ledger](docs/decision-ledger.md) | A Claude Code hook that makes every design decision record its type, basis, and status |
 | [Changelog](CHANGELOG.md) | |
 
 ---
